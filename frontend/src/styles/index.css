@@ -1,0 +1,11 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Fix double eye icon in Edge for passwords */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="text"]::-ms-reveal,
+input[type="text"]::-ms-clear {
+  display: none;
+}
