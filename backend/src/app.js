@@ -32,9 +32,18 @@ app.use(cors());
 app.use(express.json());
 
 // ── Phục vụ Frontend (Static Files) ─────────────────────
-// Lưu ý: Cần chạy 'npm run build' trong thư mục 'frontend' trước
-// Đường dẫn từ backend/src/app.js: .. (src) -> .. (backend) -> project root
 const distPath = path.join(__dirname, "../../frontend/dist");
+const fs = require("fs");
+
+console.log("--- DEBUG DEPLOY ---");
+console.log("__dirname:", __dirname);
+console.log("Resolved distPath:", distPath);
+console.log("distPath exists?:", fs.existsSync(distPath));
+if (fs.existsSync(distPath)) {
+  console.log("Contents of distPath:", fs.readdirSync(distPath));
+}
+console.log("--------------------");
+
 app.use(express.static(distPath));
 
 // ── Routes ─────────────────────────────────────────────
