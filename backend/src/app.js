@@ -33,7 +33,8 @@ app.use(express.json());
 
 // ── Phục vụ Frontend (Static Files) ─────────────────────
 // Lưu ý: Cần chạy 'npm run build' trong thư mục 'frontend' trước
-const distPath = path.join(__dirname, "../../../frontend/dist");
+// Đường dẫn từ backend/src/app.js: .. (src) -> .. (backend) -> project root
+const distPath = path.join(__dirname, "../../frontend/dist");
 app.use(express.static(distPath));
 
 // ── Routes ─────────────────────────────────────────────
@@ -43,9 +44,9 @@ app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/upload", uploadRoutes);
 
-// ── Health check ───────────────────────────────────────
-app.get("/", (req, res) => {
-  res.json({ message: "nhatbook API đang chạy!" });
+// ── API Health check (Đổi sang /api/health để tránh tranh chấp với Frontend) ──
+app.get("/api/health", (req, res) => {
+  res.json({ message: "nhatbook API đang chạy!", status: "OK" });
 });
 
 // ── 404 handler cho API ─────────────────────────────────
