@@ -7,7 +7,7 @@ const userSockets = new Map();
 const init = (server) => {
   io = socketIo(server, {
     cors: {
-      origin: "*", // Cho phép mọi origin tạm thời
+      origin: process.env.FRONTEND_URL || "*",
       methods: ["GET", "POST", "PUT", "DELETE"]
     }
   });

@@ -11,14 +11,14 @@ const getComments = async (req, res) => {
   const { id } = req.params; // post id
   try {
     const result = await pool.query(
-      `SELECT c.id, c.content, c.is_flagged, c.violation_reason, c.created_at, 
+      `SELECT c.id, c.content, c.is_flagged, c.violation_reason, c.created_at, c.parent_id,
               u.id AS author_id, u.username AS author_name, u.avatar_url AS author_avatar,
               (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
                FROM user_inventory 
                WHERE user_id = u.id AND is_equipped = true) AS author_equipped_items
        FROM comments c
        JOIN users u ON u.id = c.user_id
-       WHERE c.post_id = $1 AND c.parent_id IS NULL
+       WHERE c.post_id = $1
        ORDER BY c.created_at ASC`,
       [id]
     );
