@@ -3,7 +3,10 @@
  * Môi trường: Localhost (Frontend: 5173, Backend: 3000)
  */
 
-const BASE = (import.meta as any).env.VITE_API_URL || "http://localhost:3000";
+// Tự động lấy URL từ biến môi trường của Vite, xóa dấu gạch chéo ở cuối nếu có
+const rawBase = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+
 export const API_BASE_URL = `${BASE}/api`;
 
 export const API_ENDPOINTS = {

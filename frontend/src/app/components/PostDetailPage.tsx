@@ -168,7 +168,7 @@ export function PostDetailPage() {
             reason: data.moderation.reason
           });
         }
-        
+
         if (parentId) {
           setReplyContent("");
           setReplyingTo(null);
@@ -246,7 +246,7 @@ export function PostDetailPage() {
     <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       {/* Nút quay lại & Tiêu đề trang */}
       <div className="flex items-center gap-4 mb-8">
-        <button 
+        <button
           onClick={() => navigate("/")}
           className="p-3 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all text-muted-foreground hover:text-foreground"
         >
@@ -256,418 +256,416 @@ export function PostDetailPage() {
       </div>
 
       <article className="bg-card rounded-[2.5rem] shadow-sm border border-border overflow-hidden mb-12">
-          <div className="p-8 md:p-12">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="px-4 py-1.5 bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold rounded-full uppercase tracking-wider">
-                {post.category}
-              </span>
-              <span className="text-muted-foreground flex items-center gap-1.5 text-sm font-medium">
-                <Calendar className="w-4 h-4" /> {new Date(post.created_at).toLocaleDateString("vi-VN")}
-              </span>
-            </div>
-
-            <h1 className="text-4xl md:text-5xl font-extrabold text-foreground mb-8 leading-tight tracking-tight">
-              {post.title}
-            </h1>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-6 text-sm text-muted-foreground flex-wrap">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center p-0.5 scale-90 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${post.author_id}`)}>
-                    <UserAvatar 
-                      src={post.author_avatar} 
-                      username={post.author_name} 
-                      equippedItems={post.author_equipped_items}
-                      size="sm"
-                    />
-                  </div>
-                  <span className="font-semibold text-foreground/90 cursor-pointer hover:text-green-600 hover:underline transition-colors" onClick={() => navigate(`/user/${post.author_id}`)}>{post.author_name}</span>
-                </div>
-              </div>
-
-              {/* Khu Vực Nút Admin / Tác giả */}
-              {(currentUser?.role === "ADMIN" || (currentUser?.id === post.author_id && currentUser?.role === "MEMBER")) && (
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={`/admin/posts/${id}/edit`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-semibold"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" /> Sửa bài
-                  </Link>
-                  <button
-                    onClick={deletePost}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-xs font-semibold"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Xóa bài
-                  </button>
-                </div>
-              )}
-            </div>
+        <div className="p-8 md:p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="px-4 py-1.5 bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold rounded-full uppercase tracking-wider">
+              {post.category}
+            </span>
+            <span className="text-muted-foreground flex items-center gap-1.5 text-sm font-medium">
+              <Calendar className="w-4 h-4" /> {new Date(post.created_at).toLocaleDateString("vi-VN")}
+            </span>
           </div>
 
-          <div className="relative">
-            <div
-              ref={contentRef}
-              className={`prose prose-lg dark:prose-invert max-w-none text-foreground/90 leading-relaxed 
+          <h1 className="text-4xl md:text-5xl font-extrabold text-foreground mb-8 leading-tight tracking-tight">
+            {post.title}
+          </h1>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-6 text-sm text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center p-0.5 scale-90 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${post.author_id}`)}>
+                  <UserAvatar
+                    src={post.author_avatar}
+                    username={post.author_name}
+                    equippedItems={post.author_equipped_items}
+                    size="sm"
+                  />
+                </div>
+                <span className="font-semibold text-foreground/90 cursor-pointer hover:text-green-600 hover:underline transition-colors" onClick={() => navigate(`/user/${post.author_id}`)}>{post.author_name}</span>
+              </div>
+            </div>
+
+            {/* Khu Vực Nút Admin / Tác giả */}
+            {(currentUser?.role === "ADMIN" || (currentUser?.id === post.author_id && currentUser?.role === "MEMBER")) && (
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/admin/posts/${id}/edit`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-semibold"
+                >
+                  <Edit3 className="w-3.5 h-3.5" /> Sửa bài
+                </Link>
+                <button
+                  onClick={deletePost}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-xs font-semibold"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Xóa bài
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="relative">
+          <div
+            ref={contentRef}
+            className={`prose prose-lg dark:prose-invert max-w-none text-foreground/90 leading-relaxed 
                 prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground 
                 prose-img:rounded-3xl prose-img:shadow-lg prose-a:text-green-600 px-8 sm:px-12 transition-all duration-500 ease-in-out overflow-hidden
                 ${showReadMore && !isExpanded ? 'max-h-[800px]' : 'max-h-full pb-8'}`}
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
 
-            {/* Read More / Collapse Toggle UI */}
-            {showReadMore && (
-              <div className={`absolute bottom-0 left-0 right-0 flex justify-center pb-10 pt-44 transition-all duration-500
+          {/* Read More / Collapse Toggle UI */}
+          {showReadMore && (
+            <div className={`absolute bottom-0 left-0 right-0 flex justify-center pb-10 pt-44 transition-all duration-500
                 ${isExpanded ? 'static pt-4 pb-12' : 'bg-gradient-to-t from-card via-card/95 to-transparent'}`}>
-                
-                <button
-                  onClick={() => {
-                    setIsExpanded(!isExpanded);
-                    if (isExpanded) {
-                      // Scroll back to content top if collapsing
-                      contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
-                  className="flex items-center gap-2 px-8 py-3 bg-white dark:bg-muted border border-border rounded-full shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all font-bold text-green-600 dark:text-green-400 group"
-                >
-                  {isExpanded ? (
-                    <><ChevronUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform" /> Thu gọn nội dung</>
-                  ) : (
-                    <><ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" /> Xem thêm nội dung</>
-                  )}
-                </button>
-              </div>
+
+              <button
+                onClick={() => {
+                  setIsExpanded(!isExpanded);
+                  if (isExpanded) {
+                    // Scroll back to content top if collapsing
+                    contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                className="flex items-center gap-2 px-8 py-3 bg-white dark:bg-muted border border-border rounded-full shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all font-bold text-green-600 dark:text-green-400 group"
+              >
+                {isExpanded ? (
+                  <><ChevronUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform" /> Thu gọn nội dung</>
+                ) : (
+                  <><ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" /> Xem thêm nội dung</>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Action Bar (Like/Meta) */}
+        <div className="px-8 sm:px-12 py-6 border-t border-border flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleLike}
+              disabled={isLiking}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 ${isLiked
+                ? "border-red-100 bg-red-50 text-red-500 hover:bg-red-100"
+                : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-red-500"
+                } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <Heart
+                className={`w-5 h-5 transition-transform duration-300 ${isLiked ? "fill-red-500 scale-110" : "group-hover:scale-110 group-active:scale-90"}`}
+              />
+              <span className="font-medium">{isLiked ? "Đã thích" : "Thích"}</span>
+            </button>
+
+            {likes.length > 0 && (
+              <button
+                onClick={() => setShowLikesModal(true)}
+                className="text-sm text-muted-foreground hover:text-foreground font-medium hover:underline flex items-center gap-1.5"
+              >
+                <div className="flex -space-x-2">
+                  {likes.slice(0, 3).map((liker, i) => (
+                    <div key={liker.id} className="w-6 h-6 rounded-full border-2 border-card overflow-hidden bg-muted relative" style={{ zIndex: 10 - i }}>
+                      {liker.avatar_url ? (
+                        <img src={liker.avatar_url} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-muted text-[9px] font-bold text-muted-foreground">
+                          {liker.username.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <span>
+                  {isLiked
+                    ? (likes.length === 1 ? 'Bạn đã thích bài viết' : `Bạn và ${likes.length - 1} người khác`)
+                    : `${likes.length} lượt thích`}
+                </span>
+              </button>
             )}
           </div>
 
-          {/* Action Bar (Like/Meta) */}
-          <div className="px-8 sm:px-12 py-6 border-t border-border flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleLike}
-                disabled={isLiking}
-                className={`group flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 ${isLiked
-                    ? "border-red-100 bg-red-50 text-red-500 hover:bg-red-100"
-                    : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-red-500"
-                  } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                <Heart
-                  className={`w-5 h-5 transition-transform duration-300 ${isLiked ? "fill-red-500 scale-110" : "group-hover:scale-110 group-active:scale-90"}`}
-                />
-                <span className="font-medium">{isLiked ? "Đã thích" : "Thích"}</span>
-              </button>
+          <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
+            <MessageSquare className="w-4 h-4" />
+            {comments.length} Bình luận
+          </div>
+        </div>
+      </article>
 
-              {likes.length > 0 && (
+      {/* Comments Section */}
+      <section className="bg-card rounded-[2.5rem] shadow-sm border border-border p-8 sm:p-12">
+        {/* Form Create Comment */}
+        {currentUser ? (
+          <form onSubmit={(e) => submitComment(e, null)} className="mb-10 flex gap-4">
+            <div className="shrink-0 flex items-center justify-center p-0.5">
+              <UserAvatar
+                src={currentUser.avatar_url}
+                username={currentUser.username}
+                equippedItems={currentUser.equipped_items}
+                size="md"
+              />
+            </div>
+            <div className="flex-1">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Chia sẻ suy nghĩ của bạn về bài viết này..."
+                className="w-full border border-border rounded-xl px-4 py-3 placeholder-muted-foreground focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all resize-none bg-background text-sm sm:text-base"
+                rows={2}
+                required
+              />
+              <div className="mt-3 flex justify-end">
                 <button
-                  onClick={() => setShowLikesModal(true)}
-                  className="text-sm text-muted-foreground hover:text-foreground font-medium hover:underline flex items-center gap-1.5"
+                  type="submit"
+                  disabled={isSubmitting || !newComment.trim()}
+                  className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium text-sm disabled:opacity-50 shadow-sm"
                 >
-                  <div className="flex -space-x-2">
-                    {likes.slice(0, 3).map((liker, i) => (
-                      <div key={liker.id} className="w-6 h-6 rounded-full border-2 border-card overflow-hidden bg-muted relative" style={{ zIndex: 10 - i }}>
-                        {liker.avatar_url ? (
-                          <img src={liker.avatar_url} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-muted text-[9px] font-bold text-muted-foreground">
-                            {liker.username.charAt(0).toUpperCase()}
+                  Gửi bình luận
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : (
+          <div className="mb-10 p-6 bg-muted/50 rounded-xl border border-border text-center">
+            <p className="text-muted-foreground mb-3 text-sm">Vui lòng đăng nhập để tham gia bình luận.</p>
+            <Link to="/login" className="inline-block px-5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted transition-colors shadow-sm">
+              Đăng nhập ngay
+            </Link>
+          </div>
+        )}
+
+        {/* Main List */}
+        <div className="space-y-8">
+          {parentComments.map((parent) => (
+            <div key={parent.id} className="flex flex-col gap-4">
+              <div className="flex gap-4 group">
+                <div className="shrink-0 flex items-center justify-center p-0.5 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${parent.user_id || (parent as any).author_id}`)}>
+                  <UserAvatar
+                    src={parent.author_avatar}
+                    username={parent.author_name}
+                    equippedItems={parent.author_equipped_items || []}
+                    size="md"
+                  />
+                </div>
+
+                <div className="flex-1">
+                  {(() => {
+                    const hasGold = (parent.author_equipped_items || [])?.some(i => i?.item_id === 'gold_comment');
+                    return (
+                      <div className={`rounded-2xl rounded-tl-sm px-5 py-4 border transition-all ${hasGold
+                          ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 shadow-sm shadow-amber-500/10'
+                          : 'bg-muted/50 border-border'
+                        }`}>
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-semibold text-sm ${hasGold ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
+                              {parent.author_name}
+                            </span>
+                            {hasGold && <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />}
+                            {parent.author_role === "ADMIN" && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded-md font-bold uppercase transition-colors">Admin</span>
+                            )}
+                            {parent.author_role === "MEMBER" && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md font-bold uppercase transition-colors">Member</span>
+                            )}
+                            {parent.author_role === "USER" && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-bold uppercase transition-colors">User</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(parent.created_at).toLocaleString("vi-VN", { hour: '2-digit', minute: '2-digit', day: '2-digit' })}
+                            </span>
+
+                            {/* Menu 3 chấm (Parent) */}
+                            {currentUser && (currentUser.id === parent.user_id || currentUser.role === "ADMIN") && (
+                              <div className="relative">
+                                <button
+                                  onClick={() => setOpenDropdownId(openDropdownId === parent.id ? null : parent.id)}
+                                  className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors"
+                                >
+                                  <MoreVertical className="w-4 h-4" />
+                                </button>
+
+                                {openDropdownId === parent.id && (
+                                  <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setOpenDropdownId(null)}></div>
+                                    <div className="absolute right-0 top-full mt-1 w-40 bg-card rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border z-50 overflow-hidden py-1">
+                                      <button
+                                        onClick={() => { deleteComment(parent.id); setOpenDropdownId(null); }}
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                      >
+                                        <Trash2 className="w-4 h-4" /> Xóa bình luận
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div
+                          className={`text-sm whitespace-pre-wrap mt-2 comment-content ${hasGold ? 'text-amber-900 dark:text-amber-100/90 font-medium' : 'text-foreground/80'}`}
+                          dangerouslySetInnerHTML={{ __html: parent.content }}
+                        />
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex items-center gap-4 mt-2 ml-2">
+                    {currentUser && (
+                      <button
+                        onClick={() => handleReplyClick(parent.id)}
+                        className="text-xs font-semibold text-muted-foreground hover:text-green-600 flex items-center gap-1 transition-colors"
+                      >
+                        <Reply className="w-3.5 h-3.5" /> Phản hồi
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {replyingTo === parent.id && (
+                <div className="ml-14 flex gap-3 relative">
+                  <div className="absolute -left-8 top-0 bottom-0 w-px bg-border" />
+                  <div className="w-8 h-8 shrink-0 rounded-full border border-border overflow-hidden flex items-center justify-center bg-muted">
+                    {currentUser?.avatar_url ? (
+                      <img src={currentUser.avatar_url} alt="You" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <form onSubmit={(e) => submitComment(e, parent.id)} className="flex-1">
+                    <div className="relative border border-border rounded-xl overflow-hidden shadow-sm bg-card focus-within:ring-2 focus-within:ring-green-500/20">
+                      <textarea
+                        autoFocus
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        placeholder={`Trả lời ${parent.author_name}...`}
+                        className="w-full px-4 py-3 placeholder-muted-foreground focus:outline-none transition-all resize-none bg-transparent text-sm text-foreground"
+                        rows={2}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(null)}
+                        className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-foreground rounded-md"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !replyContent.trim()}
+                        className="px-4 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-xs disabled:opacity-50"
+                      >
+                        Gửi phản hồi
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {getReplies(parent.id).length > 0 && (
+                <div className="ml-14 flex flex-col gap-4 relative mt-4">
+                  <div className="absolute -left-10 top-2 bottom-4 w-px bg-border rounded-full" />
+                  {getReplies(parent.id).map(child => (
+                    <div key={child.id} className="flex gap-3 group">
+                      <div className="shrink-0 flex items-center justify-center p-0.5 scale-90 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${child.user_id || (child as any).author_id}`)}>
+                        <UserAvatar
+                          src={child.author_avatar}
+                          username={child.author_name}
+                          equippedItems={child.author_equipped_items || []}
+                          size="sm"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        {(() => {
+                          const hasGold = (child.author_equipped_items || [])?.some(i => i?.item_id === 'gold_comment');
+                          return (
+                            <div className={`rounded-2xl rounded-tl-sm px-4 py-3 border transition-all ${hasGold
+                                ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 shadow-sm shadow-amber-500/10'
+                                : 'bg-muted/50 border-border'
+                              }`}>
+                              <div className="flex justify-between items-start mb-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-semibold text-sm ${hasGold ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
+                                    {child.author_name}
+                                  </span>
+                                  {hasGold && <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />}
+                                  {child.author_role === "ADMIN" && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded-md font-bold uppercase transition-colors">Admin</span>
+                                  )}
+                                  {child.author_role === "MEMBER" && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md font-bold uppercase transition-colors">Member</span>
+                                  )}
+                                  {child.author_role === "USER" && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-bold uppercase transition-colors">User</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] text-muted-foreground">
+                                    {new Date(child.created_at).toLocaleString("vi-VN", { hour: '2-digit', minute: '2-digit', day: '2-digit' })}
+                                  </span>
+                                  {/* Menu 3 chấm (Child) */}
+                                  {currentUser && (currentUser.id === child.user_id || currentUser.role === "ADMIN") && (
+                                    <div className="relative">
+                                      <button
+                                        onClick={() => setOpenDropdownId(openDropdownId === child.id ? null : child.id)}
+                                        className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+                                      >
+                                        <MoreVertical className="w-3.5 h-3.5" />
+                                      </button>
+                                      {openDropdownId === child.id && (
+                                        <>
+                                          <div className="fixed inset-0 z-40" onClick={() => setOpenDropdownId(null)}></div>
+                                          <div className="absolute right-0 top-full mt-1 w-40 bg-card rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border z-50 overflow-hidden py-1">
+                                            <button
+                                              onClick={() => { deleteComment(child.id); setOpenDropdownId(null); }}
+                                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                            >
+                                              <Trash2 className="w-4 h-4" /> Xóa phản hồi
+                                            </button>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div
+                                className={`text-sm whitespace-pre-wrap mt-1 comment-content ${hasGold ? 'text-amber-900 dark:text-amber-100/90 font-medium' : 'text-foreground/80'}`}
+                                dangerouslySetInnerHTML={{ __html: child.content }}
+                              />
+                            </div>
+                          );
+                        })()}
+
+                        {currentUser && (
+                          <div className="flex items-center gap-4 mt-1.5 ml-2">
+                            <button
+                              onClick={() => handleReplyClick(parent.id, child.author_name)}
+                              className="text-[11px] font-semibold text-gray-500 hover:text-green-600 flex items-center gap-1 transition-colors"
+                            >
+                              <Reply className="w-3 h-3" /> Phản hồi
+                            </button>
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
-                  <span>
-                    {isLiked
-                      ? (likes.length === 1 ? 'Bạn đã thích bài viết' : `Bạn và ${likes.length - 1} người khác`)
-                      : `${likes.length} lượt thích`}
-                  </span>
-                </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
+          ))}
 
-            <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
-              <MessageSquare className="w-4 h-4" />
-              {comments.length} Bình luận
-            </div>
-          </div>
-        </article>
-
-        {/* Comments Section */}
-        <section className="bg-card rounded-[2.5rem] shadow-sm border border-border p-8 sm:p-12">
-          {/* Form Create Comment */}
-          {currentUser ? (
-            <form onSubmit={(e) => submitComment(e, null)} className="mb-10 flex gap-4">
-              <div className="shrink-0 flex items-center justify-center p-0.5">
-                <UserAvatar 
-                  src={currentUser.avatar_url} 
-                  username={currentUser.username} 
-                  equippedItems={currentUser.equipped_items}
-                  size="md"
-                />
-              </div>
-              <div className="flex-1">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Chia sẻ suy nghĩ của bạn về bài viết này..."
-                  className="w-full border border-border rounded-xl px-4 py-3 placeholder-muted-foreground focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all resize-none bg-background text-sm sm:text-base"
-                  rows={2}
-                  required
-                />
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !newComment.trim()}
-                    className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium text-sm disabled:opacity-50 shadow-sm"
-                  >
-                    Gửi bình luận
-                  </button>
-                </div>
-              </div>
-            </form>
-          ) : (
-            <div className="mb-10 p-6 bg-muted/50 rounded-xl border border-border text-center">
-              <p className="text-muted-foreground mb-3 text-sm">Vui lòng đăng nhập để tham gia bình luận.</p>
-              <Link to="/login" className="inline-block px-5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted transition-colors shadow-sm">
-                Đăng nhập ngay
-              </Link>
+          {comments.length === 0 && (
+            <div className="text-center py-8 text-gray-500 text-sm bg-gray-50 border border-gray-100/50 rounded-2xl">
+              Bài viết này chưa có bình luận nào. Hãy trở thành người đầu tiên!
             </div>
           )}
-
-          {/* Main List */}
-          <div className="space-y-8">
-            {parentComments.map((parent) => (
-              <div key={parent.id} className="flex flex-col gap-4">
-                <div className="flex gap-4 group">
-                  <div className="shrink-0 flex items-center justify-center p-0.5 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${parent.user_id || (parent as any).author_id}`)}>
-                    <UserAvatar 
-                      src={parent.author_avatar} 
-                      username={parent.author_name} 
-                      equippedItems={parent.author_equipped_items || []}
-                      size="md"
-                    />
-                  </div>
-
-                  <div className="flex-1">
-                    {(() => {
-                      const hasGold = (parent.author_equipped_items || [])?.some(i => i?.item_id === 'gold_comment');
-                      return (
-                        <div className={`rounded-2xl rounded-tl-sm px-5 py-4 border transition-all ${
-                          hasGold 
-                          ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 shadow-sm shadow-amber-500/10' 
-                          : 'bg-muted/50 border-border'
-                        }`}>
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`font-semibold text-sm ${hasGold ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
-                                {parent.author_name}
-                              </span>
-                              {hasGold && <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />}
-                          {parent.author_role === "ADMIN" && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded-md font-bold uppercase transition-colors">Admin</span>
-                          )}
-                          {parent.author_role === "MEMBER" && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md font-bold uppercase transition-colors">Member</span>
-                          )}
-                          {parent.author_role === "USER" && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-bold uppercase transition-colors">User</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(parent.created_at).toLocaleString("vi-VN", { hour: '2-digit', minute: '2-digit', day: '2-digit' })}
-                          </span>
-
-                          {/* Menu 3 chấm (Parent) */}
-                          {currentUser && (currentUser.id === parent.user_id || currentUser.role === "ADMIN") && (
-                            <div className="relative">
-                              <button
-                                onClick={() => setOpenDropdownId(openDropdownId === parent.id ? null : parent.id)}
-                                className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors"
-                              >
-                                <MoreVertical className="w-4 h-4" />
-                              </button>
-
-                              {openDropdownId === parent.id && (
-                                <>
-                                  <div className="fixed inset-0 z-40" onClick={() => setOpenDropdownId(null)}></div>
-                                  <div className="absolute right-0 top-full mt-1 w-40 bg-card rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border z-50 overflow-hidden py-1">
-                                    <button
-                                      onClick={() => { deleteComment(parent.id); setOpenDropdownId(null); }}
-                                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" /> Xóa bình luận
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                          <div
-                            className={`text-sm whitespace-pre-wrap mt-2 comment-content ${hasGold ? 'text-amber-900 dark:text-amber-100/90 font-medium' : 'text-foreground/80'}`}
-                            dangerouslySetInnerHTML={{ __html: parent.content }}
-                          />
-                        </div>
-                      );
-                    })()}
-
-                    <div className="flex items-center gap-4 mt-2 ml-2">
-                      {currentUser && (
-                        <button
-                          onClick={() => handleReplyClick(parent.id)}
-                          className="text-xs font-semibold text-muted-foreground hover:text-green-600 flex items-center gap-1 transition-colors"
-                        >
-                          <Reply className="w-3.5 h-3.5" /> Phản hồi
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {replyingTo === parent.id && (
-                  <div className="ml-14 flex gap-3 relative">
-                    <div className="absolute -left-8 top-0 bottom-0 w-px bg-border" />
-                    <div className="w-8 h-8 shrink-0 rounded-full border border-border overflow-hidden flex items-center justify-center bg-muted">
-                      {currentUser?.avatar_url ? (
-                        <img src={currentUser.avatar_url} alt="You" className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <form onSubmit={(e) => submitComment(e, parent.id)} className="flex-1">
-                      <div className="relative border border-border rounded-xl overflow-hidden shadow-sm bg-card focus-within:ring-2 focus-within:ring-green-500/20">
-                        <textarea
-                          autoFocus
-                          value={replyContent}
-                          onChange={(e) => setReplyContent(e.target.value)}
-                          placeholder={`Trả lời ${parent.author_name}...`}
-                          className="w-full px-4 py-3 placeholder-muted-foreground focus:outline-none transition-all resize-none bg-transparent text-sm text-foreground"
-                          rows={2}
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setReplyingTo(null)}
-                          className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-foreground rounded-md"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="mt-2 flex justify-end">
-                        <button
-                          type="submit"
-                          disabled={isSubmitting || !replyContent.trim()}
-                          className="px-4 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-xs disabled:opacity-50"
-                        >
-                          Gửi phản hồi
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-
-                {getReplies(parent.id).length > 0 && (
-                  <div className="ml-14 flex flex-col gap-4 relative mt-4">
-                    <div className="absolute -left-10 top-2 bottom-4 w-px bg-border rounded-full" />
-                    {getReplies(parent.id).map(child => (
-                      <div key={child.id} className="flex gap-3 group">
-                        <div className="shrink-0 flex items-center justify-center p-0.5 scale-90 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${child.user_id || (child as any).author_id}`)}>
-                           <UserAvatar 
-                              src={child.author_avatar} 
-                              username={child.author_name} 
-                              equippedItems={child.author_equipped_items || []}
-                              size="sm"
-                           />
-                        </div>
-                        <div className="flex-1">
-                          {(() => {
-                            const hasGold = (child.author_equipped_items || [])?.some(i => i?.item_id === 'gold_comment');
-                            return (
-                              <div className={`rounded-2xl rounded-tl-sm px-4 py-3 border transition-all ${
-                                hasGold 
-                                ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 shadow-sm shadow-amber-500/10' 
-                                : 'bg-muted/50 border-border'
-                              }`}>
-                                <div className="flex justify-between items-start mb-0.5">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`font-semibold text-sm ${hasGold ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
-                                      {child.author_name}
-                                    </span>
-                                    {hasGold && <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />}
-                                {child.author_role === "ADMIN" && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded-md font-bold uppercase transition-colors">Admin</span>
-                                )}
-                                {child.author_role === "MEMBER" && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md font-bold uppercase transition-colors">Member</span>
-                                )}
-                                {child.author_role === "USER" && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-bold uppercase transition-colors">User</span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[11px] text-muted-foreground">
-                                  {new Date(child.created_at).toLocaleString("vi-VN", { hour: '2-digit', minute: '2-digit', day: '2-digit' })}
-                                </span>
-                                {/* Menu 3 chấm (Child) */}
-                                {currentUser && (currentUser.id === child.user_id || currentUser.role === "ADMIN") && (
-                                  <div className="relative">
-                                    <button
-                                      onClick={() => setOpenDropdownId(openDropdownId === child.id ? null : child.id)}
-                                      className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
-                                    >
-                                      <MoreVertical className="w-3.5 h-3.5" />
-                                    </button>
-                                    {openDropdownId === child.id && (
-                                      <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setOpenDropdownId(null)}></div>
-                                        <div className="absolute right-0 top-full mt-1 w-40 bg-card rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border z-50 overflow-hidden py-1">
-                                          <button
-                                            onClick={() => { deleteComment(child.id); setOpenDropdownId(null); }}
-                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                                          >
-                                            <Trash2 className="w-4 h-4" /> Xóa phản hồi
-                                          </button>
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div
-                              className={`text-sm whitespace-pre-wrap mt-1 comment-content ${hasGold ? 'text-amber-900 dark:text-amber-100/90 font-medium' : 'text-foreground/80'}`}
-                              dangerouslySetInnerHTML={{ __html: child.content }}
-                            />
-                          </div>
-                            );
-                          })()}
-
-                          {currentUser && (
-                            <div className="flex items-center gap-4 mt-1.5 ml-2">
-                              <button
-                                onClick={() => handleReplyClick(parent.id, child.author_name)}
-                                className="text-[11px] font-semibold text-gray-500 hover:text-green-600 flex items-center gap-1 transition-colors"
-                              >
-                                <Reply className="w-3 h-3" /> Phản hồi
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {comments.length === 0 && (
-              <div className="text-center py-8 text-gray-500 text-sm bg-gray-50 border border-gray-100/50 rounded-2xl">
-                Bài viết này chưa có bình luận nào. Hãy trở thành người đầu tiên!
-              </div>
-            )}
-          </div>
-        </section>
+        </div>
+      </section>
 
       {/* Modal Hiện Danh Sách Người Like */}
       {showLikesModal && (
@@ -708,47 +706,47 @@ export function PostDetailPage() {
       {/* MODAL CẢNH BÁO VI PHẠM AI */}
       {violationDetail && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-card w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-rose-500/20 overflow-hidden animate-in zoom-in-95 duration-300">
-              {/* Header */}
-              <div className="bg-rose-500 p-8 flex flex-col items-center text-center text-white relative">
-                <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-                <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-xl flex items-center justify-center mb-4 shadow-xl border border-white/30 animate-bounce">
-                  <ShieldAlert className="w-10 h-10 text-white" />
+          <div className="bg-card w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-rose-500/20 overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Header */}
+            <div className="bg-rose-500 p-8 flex flex-col items-center text-center text-white relative">
+              <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+              <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-xl flex items-center justify-center mb-4 shadow-xl border border-white/30 animate-bounce">
+                <ShieldAlert className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-black tracking-tight uppercase">Phát hiện vi phạm!</h3>
+              <p className="text-rose-100 font-medium text-sm mt-1">Hệ thống AI Moderator đã can thiệp</p>
+            </div>
+
+            {/* Body */}
+            <div className="p-8">
+              <div className="flex gap-4 items-start mb-6 bg-rose-50 dark:bg-rose-950/20 p-4 rounded-2xl border border-rose-100 dark:border-rose-900/30">
+                <span className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
+                  <AlertTriangle className="w-5 h-5" />
+                </span>
+                <div>
+                  <p className="font-bold text-rose-950 dark:text-rose-100 text-base leading-tight mb-1">{violationDetail.message}</p>
+                  <p className="text-xs text-rose-600/80 dark:text-rose-400 font-medium italic">Vui lòng tuân thủ tiêu chuẩn cộng đồng để xây dựng NhatBook văn minh.</p>
                 </div>
-                <h3 className="text-2xl font-black tracking-tight uppercase">Phát hiện vi phạm!</h3>
-                <p className="text-rose-100 font-medium text-sm mt-1">Hệ thống AI Moderator đã can thiệp</p>
               </div>
 
-              {/* Body */}
-              <div className="p-8">
-                <div className="flex gap-4 items-start mb-6 bg-rose-50 dark:bg-rose-950/20 p-4 rounded-2xl border border-rose-100 dark:border-rose-900/30">
-                  <span className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
-                    <AlertTriangle className="w-5 h-5" />
-                  </span>
-                  <div>
-                    <p className="font-bold text-rose-950 dark:text-rose-100 text-base leading-tight mb-1">{violationDetail.message}</p>
-                    <p className="text-xs text-rose-600/80 dark:text-rose-400 font-medium italic">Vui lòng tuân thủ tiêu chuẩn cộng đồng để xây dựng NhatBook văn minh.</p>
-                  </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-muted-foreground text-[10px] font-bold uppercase tracking-widest pl-1">
+                  <Info className="w-3 h-3" /> Chi tiết phân tích AI
                 </div>
-
-                <div className="space-y-3">
-                   <div className="flex items-center gap-2 text-muted-foreground text-[10px] font-bold uppercase tracking-widest pl-1">
-                      <Info className="w-3 h-3" /> Chi tiết phân tích AI
-                   </div>
-                   <div className="bg-muted/50 p-5 rounded-2xl border border-border text-sm leading-relaxed font-medium text-foreground italic shadow-inner">
-                      "{violationDetail.reason}"
-                   </div>
+                <div className="bg-muted/50 p-5 rounded-2xl border border-border text-sm leading-relaxed font-medium text-foreground italic shadow-inner">
+                  "{violationDetail.reason}"
                 </div>
-
-                <button 
-                  onClick={() => setViolationDetail(null)}
-                  className="w-full mt-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group"
-                >
-                  Đã hiểu & Tiếp tục
-                  <ShieldCheck className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
               </div>
-           </div>
+
+              <button
+                onClick={() => setViolationDetail(null)}
+                className="w-full mt-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group"
+              >
+                Đã hiểu & Tiếp tục
+                <ShieldCheck className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
