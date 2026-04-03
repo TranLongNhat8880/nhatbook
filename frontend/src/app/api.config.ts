@@ -3,7 +3,7 @@
  * Môi trường: Localhost (Frontend: 5173, Backend: 3000)
  */
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const BASE = (import.meta as any).env.VITE_API_URL || "http://localhost:3000";
 export const API_BASE_URL = `${BASE}/api`;
 
 export const API_ENDPOINTS = {

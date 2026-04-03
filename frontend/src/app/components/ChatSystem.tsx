@@ -46,7 +46,7 @@ export default function ChatSystem({ token, currentUser }: { token: string; curr
   // Khởi khởi tạo Socket
   useEffect(() => {
     if (!token || !currentUser) return;
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const backendUrl = (import.meta as any).env.VITE_API_URL || "http://localhost:3000";
     const newSocket = io(backendUrl);
     setSocket(newSocket);
 
