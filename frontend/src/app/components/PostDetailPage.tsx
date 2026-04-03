@@ -236,8 +236,8 @@ export function PostDetailPage() {
     }
   };
 
-  const parentComments = comments.filter(c => !c.parent_id);
-  const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId);
+  const parentComments = comments.filter(c => !(c as any).parent_id && !(c as any).parentId);
+  const getReplies = (parentId: string) => comments.filter(c => (c as any).parent_id === parentId || (c as any).parentId === parentId);
 
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground font-medium animate-pulse">Đang tải bài viết...</div>;
   if (!post) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground font-medium">Rất tiếc, bài viết không tồn tại.</div>;
