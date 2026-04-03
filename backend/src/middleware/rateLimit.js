@@ -6,7 +6,7 @@ const rateLimit = require("express-rate-limit");
  */
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 100, // Giới hạn mỗi IP tối đa 100 requests
+  max: 10000, // Tăng mạnh giới hạn lúc Dev (tránh lỗi 429)
   message: {
     status: 429,
     message: "Gửi yêu cầu quá nhiều, vui lòng thử lại sau"
@@ -20,7 +20,7 @@ const apiLimiter = rateLimit({
  */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 10, // Giới hạn mỗi IP tối đa 10 lần thử login/register
+  max: 1000, // Tăng mạnh cho Dev
   message: {
     status: 429,
     message: "Gửi yêu cầu quá nhiều, vui lòng thử lại sau"

@@ -7,11 +7,15 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) DEFAULT 'USER',
+    role VARCHAR(20) DEFAULT 'USER', -- Can be 'ADMIN', 'MEMBER', or 'USER'
     avatar_url VARCHAR(255),
     facebook_url VARCHAR(255),
     instagram_url VARCHAR(255),
     threads_url VARCHAR(255),
+    reset_token VARCHAR(10),
+    reset_token_expiry TIMESTAMP,
+    is_verified BOOLEAN DEFAULT false,
+    is_locked BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Eye, EyeOff, BookOpen, Mail, Lock, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, BookOpen, Mail, Lock, ArrowRight, ShieldAlert, AlertTriangle } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { ThemeToggle } from "./ThemeToggle";
+import { API_ENDPOINTS } from "../api.config";
+import { X } from "lucide-react";
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -10,6 +12,8 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isLocked, setIsLocked] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -18,7 +22,7 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(API_ENDPOINTS.LOGIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -27,7 +31,12 @@ export function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Đăng nhập thất bại");
+        if (data.isLocked) {
+          setIsLocked(true);
+          setError(data.message);
+        } else {
+          setError(data.message || "Đăng nhập thất bại");
+        }
         return;
       }
 
@@ -48,6 +57,138 @@ export function LoginPage() {
     setIsLoading(true);
     setTimeout(() => setIsLoading(false), 1500);
   };
+
+  if (isLocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-background transition-colors duration-300 relative">
+        <div className="absolute top-6 right-6">
+          <ThemeToggle />
+        </div>
+
+        <div className="w-full max-w-md bg-card rounded-[2.5rem] shadow-[0_20px_50px_rgba(239,68,68,0.15)] p-10 border border-red-200 dark:border-red-900/30 text-center animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-red-50 dark:border-red-900/10">
+            <ShieldAlert className="w-10 h-10 text-red-600 dark:text-red-500" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-red-600 dark:text-red-500 mb-4">Tài khoản đã bị khóa!</h2>
+          
+          <div className="bg-red-50 dark:bg-red-900/20 rounded-2xl p-6 mb-8 border border-red-100 dark:border-red-900/30">
+            <p className="text-sm text-red-700 dark:text-red-400 leading-relaxed font-medium">
+              Rất tiếc, tài khoản của bạn ({email}) đã bị quản trị viên tạm khóa do vi phạm các quy tắc cộng đồng hoặc điều khoản sử dụng của nhatbook.
+            </p>
+            <button 
+              onClick={() => setShowTerms(true)}
+              className="text-xs text-red-500 hover:text-red-600 underline mt-3 font-bold cursor-pointer"
+            >
+              Xem chính sách và điều khoản tại đây
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <a 
+              href={`mailto:cogisaithathu@gmail.com?subject=Khiếu nại khóa tài khoản: ${email}&body=Kính gửi Ban Quản trị NhatBook,%0D%0A%0D%0ATôi là chủ sở hữu tài khoản: ${email}%0D%0A%0D%0ATôi nhận được thông báo tài khoản của mình bị khóa do vi phạm chính sách. Tôi viết thư này để khiếu nại và mong Ban Quản trị xem xét lại trường hợp của tôi.%0D%0A%0D%0ALý do khiếu nại:%0D%0A(Vui lòng trình bày lý do của bạn tại đây)%0D%0A%0D%0ATrân trọng,%0D%0A${email}`}
+              className="w-full py-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-bold shadow-lg shadow-red-600/20 flex items-center justify-center gap-2"
+            >
+              <Mail className="w-5 h-5" />
+              Gửi khiếu nại ngay
+            </a>
+            
+            <button
+              onClick={() => setIsLocked(false)}
+              className="w-full py-3 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+            >
+              Quay lại đăng nhập
+            </button>
+          </div>
+
+          <p className="mt-10 text-xs text-muted-foreground/60 flex items-center justify-center gap-2">
+            <AlertTriangle className="w-3 h-3" />
+            Hệ thống bảo mật nhatbook Protec
+          </p>
+        </div>
+
+        {/* Terms and Policies Modal */}
+        {showTerms && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-card w-full max-w-lg max-h-[80vh] rounded-[2rem] shadow-2xl overflow-hidden border border-border flex flex-col animate-in zoom-in-95 duration-300">
+              {/* Modal Header */}
+              <div className="p-6 border-b border-border flex items-center justify-between bg-muted/30">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-green-600" />
+                  Chính sách & Điều khoản
+                </h3>
+                <button 
+                  onClick={() => setShowTerms(false)}
+                  className="p-2 hover:bg-muted rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-8 overflow-y-auto custom-scrollbar space-y-8">
+                {/* Privacy Policy */}
+                <section>
+                  <h4 className="text-lg font-bold text-green-700 dark:text-green-500 mb-4 flex items-center gap-2">
+                    🔒 CHÍNH SÁCH BẢO MẬT
+                  </h4>
+                  <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+                    <div>
+                      <p className="font-bold text-foreground mb-1">1. Thu thập thông tin cá nhân</p>
+                      <p>NhatBook cam kết bảo vệ quyền riêng tư. Chúng tôi chỉ thu thập các thông tin cần thiết: Email, tên hiển thị và ảnh đại diện để cung cấp dịch vụ.</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground mb-1">2. Phương thức bảo mật</p>
+                      <p>Mọi thông tin nhạy cảm (như mật khẩu) đều được mã hóa an toàn. Dữ liệu hình ảnh và phiên đăng nhập được quản lý bởi các hệ thống bảo mật tiêu chuẩn cao nhất.</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground mb-1">3. Chia sẻ thông tin</p>
+                      <p>NhatBook không bán hay trao đổi dữ liệu của bạn cho bên thứ ba, trừ phi có yêu cầu pháp lý hoặc sự đồng ý từ chính bạn.</p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Terms of Service */}
+                <section>
+                  <h4 className="text-lg font-bold text-green-700 dark:text-green-500 mb-4 flex items-center gap-2">
+                    ⚖️ ĐIỀU KHOẢN SỬ DỤNG
+                  </h4>
+                  <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+                    <div>
+                      <p className="font-bold text-foreground mb-1">1. Chấp nhận điều khoản</p>
+                      <p>Việc sử dụng dịch vụ đồng nghĩa với việc bạn đồng ý tuân thủ các quy định tại đây.</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground mb-1">2. Trách nhiệm người dùng</p>
+                      <p>Bạn tự bảo quản thông tin đăng nhập và chịu trách nhiệm về nội dung mình đăng tải (không vi phạm bản quyền hay hình ảnh nhạy cảm).</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground mb-1">3. Quyền hạn Quản trị viên</p>
+                      <p>Admin có quyền tạm dừng hoặc xóa tài khoản vi phạm chính sách cộng đồng mà không cần báo trước để duy trì môi trường trong sạch.</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground mb-1">4. Miễn trừ trách nhiệm</p>
+                      <p>Chúng tôi nỗ lực duy trì hệ thống hoạt động 24/7 nhưng không chịu trách nhiệm về các sự cố hạ tầng viễn thông khách quan.</p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-6 border-t border-border bg-muted/30">
+                <button 
+                  onClick={() => setShowTerms(false)}
+                  className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90 transition-all shadow-md"
+                >
+                  Tôi đã hiểu
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -169,9 +310,9 @@ export function LoginPage() {
               />
               <span className="ml-2 text-sm text-muted-foreground">Ghi nhớ</span>
             </label>
-            <a href="#" className="text-sm font-medium text-green-600 hover:text-green-700">
+            <Link to="/forgot-password" className="text-sm font-medium text-green-600 hover:text-green-700">
               Quên mật khẩu?
-            </a>
+            </Link>
           </div>
 
           {error && <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-xl text-center">{error}</div>}

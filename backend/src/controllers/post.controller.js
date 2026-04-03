@@ -1,5 +1,6 @@
 const sanitizeHtml = require("sanitize-html");
 const pool = require("../config/db");
+const { awardNC } = require("../utils/economy");
 
 /**
  * UC_04: Xem danh sách bài viết
@@ -10,6 +11,9 @@ const getAllPosts = async (req, res) => {
     const result = await pool.query(
       `SELECT p.id, p.title, p.content, p.category, p.created_at, p.updated_at,
               u.id AS author_id, u.username AS author_name, u.avatar_url AS author_avatar,
+              (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
+               FROM user_inventory 
+               WHERE user_id = u.id AND is_equipped = true) AS author_equipped_items,
               COUNT(DISTINCT c.id) AS comment_count,
               COUNT(DISTINCT l.user_id) AS like_count
        FROM posts p
@@ -35,7 +39,10 @@ const getPostById = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT p.id, p.title, p.content, p.category, p.created_at, p.updated_at,
-              u.id AS author_id, u.username AS author_name, u.avatar_url AS author_avatar
+              u.id AS author_id, u.username AS author_name, u.avatar_url AS author_avatar,
+              (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
+               FROM user_inventory 
+               WHERE user_id = u.id AND is_equipped = true) AS author_equipped_items
        FROM posts p
        JOIN users u ON u.id = p.author_id
        WHERE p.id = $1`,
@@ -78,12 +85,24 @@ const createPost = async (req, res) => {
   }
 
   try {
+    const { checkContentToxicity } = require("../utils/aiModerator");
+    const moderationResult = await checkContentToxicity(`${title}. ${content}`);
+    const { isToxic, reason } = moderationResult;
+
+    if (isToxic) {
+      const { handleViolation } = require("../utils/violation");
+      await handleViolation(req.user.id, reason);
+    }
+
     const result = await pool.query(
-      `INSERT INTO posts (title, content, category, author_id)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO posts (title, content, category, author_id, is_flagged, violation_reason)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, title, content, category, author_id, created_at, updated_at`,
-      [title, sanitizedContent, category || null, req.user.id]
+      [title, sanitizedContent, category || null, req.user.id, isToxic, reason]
     );
+
+    // --- NHATCOIN REWARD: Post Creation (+50 NC) ---
+    await awardNC(req.user.id, 50, 'post', 150, 'post_reward', 'Phần thưởng đăng bài mới');
 
     return res.status(201).json({
       message: "Tạo bài viết thành công",
@@ -96,7 +115,7 @@ const createPost = async (req, res) => {
 };
 
 /**
- * UC_07: Cập nhật bài viết (Admin only)
+ * UC_07: Cập nhật bài viết (Admin hoặc Tác giả)
  * PUT /api/posts/:id
  */
 const updatePost = async (req, res) => {
@@ -121,16 +140,22 @@ const updatePost = async (req, res) => {
   }
 
   try {
+    // Kiểm tra quyền: Admin có thể sửa mọi bài, Member chỉ sửa bài của chính mình
+    const postCheck = await pool.query("SELECT author_id FROM posts WHERE id = $1", [id]);
+    if (postCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy bài viết" });
+    }
+
+    if (req.user.role !== "ADMIN" && postCheck.rows[0].author_id !== req.user.id) {
+      return res.status(403).json({ message: "Bạn không có quyền chỉnh sửa bài viết của người khác" });
+    }
+
     const result = await pool.query(
       `UPDATE posts SET title = $1, content = $2, category = $3
        WHERE id = $4
        RETURNING id, title, content, category, author_id, created_at, updated_at`,
       [title, sanitizedContent, category || null, id]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Không tìm thấy bài viết" });
-    }
 
     return res.status(200).json({
       message: "Cập nhật bài viết thành công",
@@ -143,20 +168,26 @@ const updatePost = async (req, res) => {
 };
 
 /**
- * UC_07: Xóa bài viết (Admin only)
+ * UC_07: Xóa bài viết (Admin hoặc Tác giả)
  * DELETE /api/posts/:id
  */
 const deletePost = async (req, res) => {
   const { id } = req.params;
   try {
+    // Kiểm tra quyền
+    const postCheck = await pool.query("SELECT author_id FROM posts WHERE id = $1", [id]);
+    if (postCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy bài viết" });
+    }
+
+    if (req.user.role !== "ADMIN" && postCheck.rows[0].author_id !== req.user.id) {
+      return res.status(403).json({ message: "Bạn không có quyền xóa bài viết của người khác" });
+    }
+
     const result = await pool.query(
       "DELETE FROM posts WHERE id = $1 RETURNING id",
       [id]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Không tìm thấy bài viết" });
-    }
 
     return res.status(200).json({ message: "Xóa bài viết thành công" });
   } catch (err) {
@@ -183,6 +214,32 @@ const toggleLike = async (req, res) => {
       return res.status(200).json({ message: "Đã hủy thích", is_liked: false });
     } else {
       await pool.query("INSERT INTO post_likes (post_id, user_id) VALUES ($1, $2)", [id, userId]);
+      
+      // --- NHATCOIN REWARD: Interaction (+5 NC to Author) ---
+      const authorRes = await pool.query("SELECT author_id FROM posts WHERE id = $1", [id]);
+      if (authorRes.rows.length > 0) {
+        const authorId = authorRes.rows[0].author_id;
+        // Phần thưởng cho tác giả khi nhận được Like (Giới hạn interaction 25 NC/ngày)
+        if (authorId !== userId) { // Tránh tự like bài mình để cày xu
+          // --- KÍCH HOẠT THÔNG BÁO LIKE_POST ---
+          try {
+            const { emitToUser } = require("../utils/socket");
+            const notifRes = await pool.query(
+              "INSERT INTO notifications (user_id, actor_id, type, post_id) VALUES ($1, $2, $3, $4) RETURNING *",
+              [authorId, userId, 'LIKE_POST', id]
+            );
+            const actorCheck = await pool.query("SELECT username, avatar_url FROM users WHERE id = $1", [userId]);
+            emitToUser(authorId, "NEW_NOTIFICATION", {
+              ...notifRes.rows[0],
+              actor_name: actorCheck.rows[0]?.username,
+              actor_avatar: actorCheck.rows[0]?.avatar_url
+            });
+          } catch (notifErr) { console.error("Lỗi tạo notification LIKE_POST:", notifErr); }
+
+          await awardNC(authorId, 5, 'interaction', 25, 'interaction_reward', `Nhận được lượt thích cho bài viết (ID: ${id})`);
+        }
+      }
+
       return res.status(201).json({ message: "Đã thích bài viết", is_liked: true });
     }
   } catch (err) {

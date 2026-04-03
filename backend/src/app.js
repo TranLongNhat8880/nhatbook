@@ -8,14 +8,31 @@ const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
 const postRoutes = require("./routes/post.routes");
 const commentRoutes = require("./routes/comment.routes");
+const shopRoutes = require("./routes/shop.routes");
 const uploadRoutes = require("./routes/upload.routes");
+const notificationRoutes = require("./routes/notification.routes");
+const messageRoutes = require("./routes/message.routes");
+const friendshipRoutes = require("./routes/friendship.routes");
 
 const { apiLimiter } = require("./middleware/rateLimit");
 
 const app = express();
 
 // ── Middleware ─────────────────────────────────────────
-// 1. Bảo mật Headers với Helmet
+// 1. CORS - Phải đặt trên cùng để tránh lỗi Preflight
+app.use(cors({
+  origin: (origin, callback) => {
+    // Cho phép localhost và các domain của Cloudflare TryCloudflare
+    if (!origin || origin.startsWith("http://localhost") || origin.endsWith(".trycloudflare.com")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Không được phép bởi CORS"));
+    }
+  },
+  credentials: true
+}));
+
+// 2. Bảo mật Headers với Helmet
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -25,48 +42,32 @@ app.use(helmet({
       "script-src": ["'self'", "'unsafe-inline'"], // Cho phép script nội bộ
     },
   },
+  crossOriginResourcePolicy: { policy: "cross-origin" } // Cho phép truy cập tài nguyên cross-origin
 }));
 
-app.use(apiLimiter); // Áp dụng giới hạn toàn cục
-app.use(cors());
+app.use(apiLimiter); // Áp dụng giới hạn sau CORS
 app.use(express.json());
 
 // ── Phục vụ Frontend (Static Files) ─────────────────────
 const distPath = path.join(__dirname, "../../frontend/dist");
-const fs = require("fs");
-
-console.log("--- DEBUG DEPLOY ---");
-console.log("__dirname:", __dirname);
-console.log("Resolved distPath:", distPath);
-console.log("distPath exists?:", fs.existsSync(distPath));
-if (fs.existsSync(distPath)) {
-  console.log("Contents of distPath:", fs.readdirSync(distPath));
-}
-console.log("--------------------");
-
-app.use(express.static(distPath));
-
 // ── Routes ─────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.json({ message: "nhatbook API đang chạy (Localhost)!" });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/shop", shopRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/friends", friendshipRoutes);
 
-// ── API Health check (Đổi sang /api/health để tránh tranh chấp với Frontend) ──
-app.get("/api/health", (req, res) => {
-  res.json({ message: "nhatbook API đang chạy!", status: "OK" });
-});
-
-// ── 404 handler cho API ─────────────────────────────────
-app.use("/api/*", (req, res) => {
+// ── 404 handler ────────────────────────────────────────
+app.use((req, res) => {
   res.status(404).json({ message: "Không tìm thấy endpoint này" });
-});
-
-// ── Catch-all (Phục vụ React SPA) ───────────────────────
-// Mọi route không khớp với API sẽ được dẫn về index.html của Frontend
-app.get("*", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
 });
 
 // ── Global error handler ───────────────────────────────

@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { Calendar, User, ArrowLeft, MessageSquare, Trash2, Reply, X, MoreVertical, Heart, Edit3, BookOpen } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
+import { Calendar, User, ArrowLeft, MessageSquare, Trash2, Reply, X, MoreVertical, Heart, Edit3, ChevronDown, ChevronUp, ShieldCheck, Crown, ShieldAlert, AlertTriangle, Info } from "lucide-react";
+import { UserAvatar } from "./ui/UserAvatar";
+import { API_ENDPOINTS } from "../api.config";
 
 interface Post {
   id: string;
@@ -9,8 +10,10 @@ interface Post {
   content: string;
   category: string;
   created_at: string;
+  author_id: string;
   author_name: string;
   author_avatar?: string;
+  author_equipped_items?: any[];
   like_count?: string;
 }
 
@@ -21,6 +24,8 @@ interface Comment {
   user_id: string;
   author_name: string;
   author_avatar?: string;
+  author_equipped_items?: any[];
+  author_role: string;
   parent_id?: string;
 }
 
@@ -37,11 +42,17 @@ export function PostDetailPage() {
   const [replyContent, setReplyContent] = useState("");
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [showLikesModal, setShowLikesModal] = useState(false);
+  const [violationDetail, setViolationDetail] = useState<{ message: string, reason: string } | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // States for Read More feature
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showReadMore, setShowReadMore] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const isLiked = currentUser && likes.some((u) => u.id === currentUser.id);
 
@@ -60,9 +71,21 @@ export function PostDetailPage() {
     }
   }, [id]);
 
+  // Check content height to show "Read More" button
+  useEffect(() => {
+    if (post && contentRef.current) {
+      const height = contentRef.current.scrollHeight;
+      if (height > 800) {
+        setShowReadMore(true);
+      } else {
+        setShowReadMore(false);
+      }
+    }
+  }, [post]);
+
   const fetchPostDetails = async () => {
     try {
-      const res = await fetch(`/api/posts/${id}`);
+      const res = await fetch(API_ENDPOINTS.GET_POST_DETAIL(id!));
       const data = await res.json();
       if (res.ok) setPost(data.post);
     } catch (err) {
@@ -74,7 +97,7 @@ export function PostDetailPage() {
 
   const fetchComments = async () => {
     try {
-      const res = await fetch(`/api/posts/${id}/comments`);
+      const res = await fetch(API_ENDPOINTS.GET_COMMENTS(id!));
       const data = await res.json();
       if (res.ok) setComments(data.comments);
     } catch (err) {
@@ -84,7 +107,7 @@ export function PostDetailPage() {
 
   const fetchLikes = async () => {
     try {
-      const res = await fetch(`/api/posts/${id}/likes`);
+      const res = await fetch(API_ENDPOINTS.GET_LIKES(id!));
       if (res.ok) {
         const data = await res.json();
         setLikes(data.likes);
@@ -100,7 +123,7 @@ export function PostDetailPage() {
     setIsLiking(true);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`/api/posts/${id}/like`, {
+      const res = await fetch(API_ENDPOINTS.LIKE_POST(id!), {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -125,7 +148,7 @@ export function PostDetailPage() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch(`/api/posts/${id}/comments`, {
+      const res = await fetch(API_ENDPOINTS.POST_COMMENT(id!), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -137,7 +160,15 @@ export function PostDetailPage() {
         }),
       });
 
+      const data = await res.json();
       if (res.ok) {
+        if (data.moderation?.isToxic) {
+          setViolationDetail({
+            message: data.message,
+            reason: data.moderation.reason
+          });
+        }
+        
         if (parentId) {
           setReplyContent("");
           setReplyingTo(null);
@@ -160,7 +191,7 @@ export function PostDetailPage() {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`/api/comments/${commentId}`, {
+      const res = await fetch(API_ENDPOINTS.DELETE_COMMENT(commentId), {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -180,7 +211,7 @@ export function PostDetailPage() {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`/api/posts/${id}`, {
+      const res = await fetch(API_ENDPOINTS.DELETE_POST(id!), {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -208,36 +239,23 @@ export function PostDetailPage() {
   const parentComments = comments.filter(c => !c.parent_id);
   const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId);
 
-  if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center">Đang tải...</div>;
-  if (!post) return <div className="min-h-screen bg-background flex items-center justify-center">Bài viết không tồn tại.</div>;
+  if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground font-medium animate-pulse">Đang tải bài viết...</div>;
+  if (!post) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground font-medium">Rất tiếc, bài viết không tồn tại.</div>;
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-300">
-      {/* Navbar Minimalist */}
-      <nav className="bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #a3e635, #16a34a)" }}>
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <span
-              className="text-xl tracking-tight dark:text-green-500"
-              style={{ color: "#15803d", fontFamily: "Georgia, serif", fontWeight: 700 }}
-            >
-              nhat<span className="italic">book</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" /> Về trang chủ
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      {/* Nút quay lại & Tiêu đề trang */}
+      <div className="flex items-center gap-4 mb-8">
+        <button 
+          onClick={() => navigate("/")}
+          className="p-3 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h2 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent italic">Chi tiết bài viết</h2>
+      </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <article className="bg-card rounded-[2.5rem] shadow-sm border border-border overflow-hidden mb-12">
+      <article className="bg-card rounded-[2.5rem] shadow-sm border border-border overflow-hidden mb-12">
           <div className="p-8 md:p-12">
             <div className="flex items-center gap-3 mb-6">
               <span className="px-4 py-1.5 bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold rounded-full uppercase tracking-wider">
@@ -255,21 +273,20 @@ export function PostDetailPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-6 text-sm text-muted-foreground flex-wrap">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full border border-border overflow-hidden flex items-center justify-center bg-muted">
-                    {post.author_avatar ? (
-                      <img src={post.author_avatar} alt={post.author_name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-sm font-bold text-muted-foreground">
-                        {post.author_name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
+                  <div className="flex items-center justify-center p-0.5 scale-90 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${post.author_id}`)}>
+                    <UserAvatar 
+                      src={post.author_avatar} 
+                      username={post.author_name} 
+                      equippedItems={post.author_equipped_items}
+                      size="sm"
+                    />
                   </div>
-                  <span className="font-semibold text-foreground/90">{post.author_name}</span>
+                  <span className="font-semibold text-foreground/90 cursor-pointer hover:text-green-600 hover:underline transition-colors" onClick={() => navigate(`/user/${post.author_id}`)}>{post.author_name}</span>
                 </div>
               </div>
 
-              {/* Khu Vực Nút Admin */}
-              {currentUser?.role === "ADMIN" && (
+              {/* Khu Vực Nút Admin / Tác giả */}
+              {(currentUser?.role === "ADMIN" || (currentUser?.id === post.author_id && currentUser?.role === "MEMBER")) && (
                 <div className="flex items-center gap-2">
                   <Link
                     to={`/admin/posts/${id}/edit`}
@@ -288,12 +305,40 @@ export function PostDetailPage() {
             </div>
           </div>
 
-          <div
-            className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 leading-relaxed mb-12
-              prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground 
-              prose-img:rounded-3xl prose-img:shadow-lg prose-a:text-green-600 px-8 sm:px-12"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+          <div className="relative">
+            <div
+              ref={contentRef}
+              className={`prose prose-lg dark:prose-invert max-w-none text-foreground/90 leading-relaxed 
+                prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground 
+                prose-img:rounded-3xl prose-img:shadow-lg prose-a:text-green-600 px-8 sm:px-12 transition-all duration-500 ease-in-out overflow-hidden
+                ${showReadMore && !isExpanded ? 'max-h-[800px]' : 'max-h-full pb-8'}`}
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+
+            {/* Read More / Collapse Toggle UI */}
+            {showReadMore && (
+              <div className={`absolute bottom-0 left-0 right-0 flex justify-center pb-10 pt-44 transition-all duration-500
+                ${isExpanded ? 'static pt-4 pb-12' : 'bg-gradient-to-t from-card via-card/95 to-transparent'}`}>
+                
+                <button
+                  onClick={() => {
+                    setIsExpanded(!isExpanded);
+                    if (isExpanded) {
+                      // Scroll back to content top if collapsing
+                      contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  className="flex items-center gap-2 px-8 py-3 bg-white dark:bg-muted border border-border rounded-full shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all font-bold text-green-600 dark:text-green-400 group"
+                >
+                  {isExpanded ? (
+                    <><ChevronUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform" /> Thu gọn nội dung</>
+                  ) : (
+                    <><ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" /> Xem thêm nội dung</>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Action Bar (Like/Meta) */}
           <div className="px-8 sm:px-12 py-6 border-t border-border flex items-center justify-between flex-wrap gap-4">
@@ -351,12 +396,13 @@ export function PostDetailPage() {
           {/* Form Create Comment */}
           {currentUser ? (
             <form onSubmit={(e) => submitComment(e, null)} className="mb-10 flex gap-4">
-              <div className="w-10 h-10 shrink-0 rounded-full border border-border overflow-hidden flex items-center justify-center bg-muted">
-                {currentUser.avatar_url ? (
-                  <img src={currentUser.avatar_url} alt="You" className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-5 h-5 text-muted-foreground" />
-                )}
+              <div className="shrink-0 flex items-center justify-center p-0.5">
+                <UserAvatar 
+                  src={currentUser.avatar_url} 
+                  username={currentUser.username} 
+                  equippedItems={currentUser.equipped_items}
+                  size="md"
+                />
               </div>
               <div className="flex-1">
                 <textarea
@@ -392,18 +438,40 @@ export function PostDetailPage() {
             {parentComments.map((parent) => (
               <div key={parent.id} className="flex flex-col gap-4">
                 <div className="flex gap-4 group">
-                  <div className="w-10 h-10 shrink-0 rounded-full border border-border overflow-hidden flex items-center justify-center bg-muted">
-                    {parent.author_avatar ? (
-                      <img src={parent.author_avatar} alt={parent.author_name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-sm font-bold text-muted-foreground">{parent.author_name.charAt(0).toUpperCase()}</span>
-                    )}
+                  <div className="shrink-0 flex items-center justify-center p-0.5 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${parent.user_id}`)}>
+                    <UserAvatar 
+                      src={parent.author_avatar} 
+                      username={parent.author_name} 
+                      equippedItems={parent.author_equipped_items}
+                      size="md"
+                    />
                   </div>
 
                   <div className="flex-1">
-                    <div className="bg-muted/50 rounded-2xl rounded-tl-sm px-5 py-4 border border-border">
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="font-semibold text-foreground text-sm">{parent.author_name}</span>
+                    {(() => {
+                      const hasGold = parent.author_equipped_items?.some(i => i.item_id === 'gold_comment');
+                      return (
+                        <div className={`rounded-2xl rounded-tl-sm px-5 py-4 border transition-all ${
+                          hasGold 
+                          ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 shadow-sm shadow-amber-500/10' 
+                          : 'bg-muted/50 border-border'
+                        }`}>
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-semibold text-sm ${hasGold ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
+                                {parent.author_name}
+                              </span>
+                              {hasGold && <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />}
+                          {parent.author_role === "ADMIN" && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded-md font-bold uppercase transition-colors">Admin</span>
+                          )}
+                          {parent.author_role === "MEMBER" && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md font-bold uppercase transition-colors">Member</span>
+                          )}
+                          {parent.author_role === "USER" && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-bold uppercase transition-colors">User</span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">
                             {new Date(parent.created_at).toLocaleString("vi-VN", { hour: '2-digit', minute: '2-digit', day: '2-digit' })}
@@ -436,11 +504,13 @@ export function PostDetailPage() {
                           )}
                         </div>
                       </div>
-                      <div
-                        className="text-foreground/80 text-sm whitespace-pre-wrap mt-2 comment-content"
-                        dangerouslySetInnerHTML={{ __html: parent.content }}
-                      />
-                    </div>
+                          <div
+                            className={`text-sm whitespace-pre-wrap mt-2 comment-content ${hasGold ? 'text-amber-900 dark:text-amber-100/90 font-medium' : 'text-foreground/80'}`}
+                            dangerouslySetInnerHTML={{ __html: parent.content }}
+                          />
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex items-center gap-4 mt-2 ml-2">
                       {currentUser && (
@@ -502,17 +572,39 @@ export function PostDetailPage() {
                     <div className="absolute -left-10 top-2 bottom-4 w-px bg-border rounded-full" />
                     {getReplies(parent.id).map(child => (
                       <div key={child.id} className="flex gap-3 group">
-                        <div className="w-8 h-8 shrink-0 rounded-full border border-border overflow-hidden flex items-center justify-center bg-muted z-10">
-                          {child.author_avatar ? (
-                            <img src={child.author_avatar} alt={child.author_name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-xs font-bold text-muted-foreground">{child.author_name.charAt(0).toUpperCase()}</span>
-                          )}
+                        <div className="shrink-0 flex items-center justify-center p-0.5 scale-90 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${child.user_id}`)}>
+                           <UserAvatar 
+                              src={child.author_avatar} 
+                              username={child.author_name} 
+                              equippedItems={child.author_equipped_items}
+                              size="sm"
+                           />
                         </div>
                         <div className="flex-1">
-                          <div className="bg-muted/50 rounded-2xl rounded-tl-sm px-4 py-3 border border-border">
-                            <div className="flex justify-between items-start mb-0.5">
-                              <span className="font-semibold text-foreground text-sm">{child.author_name}</span>
+                          {(() => {
+                            const hasGold = child.author_equipped_items?.some(i => i.item_id === 'gold_comment');
+                            return (
+                              <div className={`rounded-2xl rounded-tl-sm px-4 py-3 border transition-all ${
+                                hasGold 
+                                ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 shadow-sm shadow-amber-500/10' 
+                                : 'bg-muted/50 border-border'
+                              }`}>
+                                <div className="flex justify-between items-start mb-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-semibold text-sm ${hasGold ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
+                                      {child.author_name}
+                                    </span>
+                                    {hasGold && <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />}
+                                {child.author_role === "ADMIN" && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded-md font-bold uppercase transition-colors">Admin</span>
+                                )}
+                                {child.author_role === "MEMBER" && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md font-bold uppercase transition-colors">Member</span>
+                                )}
+                                {child.author_role === "USER" && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-bold uppercase transition-colors">User</span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-2">
                                 <span className="text-[11px] text-muted-foreground">
                                   {new Date(child.created_at).toLocaleString("vi-VN", { hour: '2-digit', minute: '2-digit', day: '2-digit' })}
@@ -544,10 +636,12 @@ export function PostDetailPage() {
                               </div>
                             </div>
                             <div
-                              className="text-foreground/80 text-sm whitespace-pre-wrap mt-1 comment-content"
+                              className={`text-sm whitespace-pre-wrap mt-1 comment-content ${hasGold ? 'text-amber-900 dark:text-amber-100/90 font-medium' : 'text-foreground/80'}`}
                               dangerouslySetInnerHTML={{ __html: child.content }}
                             />
                           </div>
+                            );
+                          })()}
 
                           {currentUser && (
                             <div className="flex items-center gap-4 mt-1.5 ml-2">
@@ -574,7 +668,6 @@ export function PostDetailPage() {
             )}
           </div>
         </section>
-      </div>
 
       {/* Modal Hiện Danh Sách Người Like */}
       {showLikesModal && (
@@ -610,6 +703,52 @@ export function PostDetailPage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+      {/* MODAL CẢNH BÁO VI PHẠM AI */}
+      {violationDetail && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-card w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-rose-500/20 overflow-hidden animate-in zoom-in-95 duration-300">
+              {/* Header */}
+              <div className="bg-rose-500 p-8 flex flex-col items-center text-center text-white relative">
+                <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-xl flex items-center justify-center mb-4 shadow-xl border border-white/30 animate-bounce">
+                  <ShieldAlert className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Phát hiện vi phạm!</h3>
+                <p className="text-rose-100 font-medium text-sm mt-1">Hệ thống AI Moderator đã can thiệp</p>
+              </div>
+
+              {/* Body */}
+              <div className="p-8">
+                <div className="flex gap-4 items-start mb-6 bg-rose-50 dark:bg-rose-950/20 p-4 rounded-2xl border border-rose-100 dark:border-rose-900/30">
+                  <span className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
+                    <AlertTriangle className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <p className="font-bold text-rose-950 dark:text-rose-100 text-base leading-tight mb-1">{violationDetail.message}</p>
+                    <p className="text-xs text-rose-600/80 dark:text-rose-400 font-medium italic">Vui lòng tuân thủ tiêu chuẩn cộng đồng để xây dựng NhatBook văn minh.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                   <div className="flex items-center gap-2 text-muted-foreground text-[10px] font-bold uppercase tracking-widest pl-1">
+                      <Info className="w-3 h-3" /> Chi tiết phân tích AI
+                   </div>
+                   <div className="bg-muted/50 p-5 rounded-2xl border border-border text-sm leading-relaxed font-medium text-foreground italic shadow-inner">
+                      "{violationDetail.reason}"
+                   </div>
+                </div>
+
+                <button 
+                  onClick={() => setViolationDetail(null)}
+                  className="w-full mt-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group"
+                >
+                  Đã hiểu & Tiếp tục
+                  <ShieldCheck className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+           </div>
         </div>
       )}
     </div>

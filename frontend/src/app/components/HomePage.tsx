@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { BookOpen, User as UserIcon, LogOut, Calendar, MessageSquare, Heart, Search, Filter, ChevronLeft, ChevronRight, Facebook, Instagram, AtSign as ThreadsIcon } from "lucide-react";
+import { BookOpen, User as UserIcon, Calendar, MessageSquare, Heart, Search, Filter, ChevronLeft, ChevronRight, Facebook, Instagram, AtSign as ThreadsIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import { ThemeToggle } from "./ThemeToggle";
+import { UserAvatar } from "./ui/UserAvatar";
+import { API_ENDPOINTS } from "../api.config";
 
 interface User {
   id: string;
@@ -9,6 +10,13 @@ interface User {
   email: string;
   role: string;
   avatar_url?: string;
+  bio?: string;
+  facebook_url?: string;
+  instagram_url?: string;
+  threads_url?: string;
+  post_count?: number;
+  total_likes?: number;
+  equipped_items?: any[];
 }
 
 interface Post {
@@ -18,8 +26,10 @@ interface Post {
   category: string;
   created_at: string;
   updated_at: string;
+  author_id: string;
   author_name: string;
   author_avatar?: string;
+  author_equipped_items?: any[];
   comment_count: string;
   like_count: string;
 }
@@ -49,7 +59,6 @@ export function HomePage() {
   const [adminUser, setAdminUser] = useState<any>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // States cho Lọc và Tìm Kiếm
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,18 +72,41 @@ export function HomePage() {
 
   // Load data on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      fetchCurrentUser(); // Background sync
-    }
+    fetchMe();
     fetchPosts();
     fetchAdminUser();
   }, []);
 
+  const fetchMe = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) setUser(JSON.parse(storedUser));
+        return;
+      }
+
+      const res = await fetch(API_ENDPOINTS.GET_ME, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      } else {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) setUser(JSON.parse(storedUser));
+      }
+    } catch (err) {
+      console.error("Lỗi tải thông tin cá nhân:", err);
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) setUser(JSON.parse(storedUser));
+    }
+  };
+
   const fetchAdminUser = async () => {
     try {
-      const res = await fetch("/api/users/admin");
+      const res = await fetch(API_ENDPOINTS.GET_ADMIN);
       if (res.ok) {
         const data = await res.json();
         setAdminUser(data.admin);
@@ -84,35 +116,9 @@ export function HomePage() {
     }
   };
 
-  // Reset Phân trang về 1 nếu có thay đổi Bộ Lọc
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
-
-  const fetchCurrentUser = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    try {
-      const res = await fetch("/api/users/me", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-        localStorage.setItem("user", JSON.stringify(data.user));
-      } else {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setUser(null);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const fetchPosts = async () => {
     try {
-      const res = await fetch("/api/posts");
+      const res = await fetch(API_ENDPOINTS.GET_POSTS);
       const data = await res.json();
       if (res.ok) {
         setPosts(data.posts);
@@ -124,12 +130,11 @@ export function HomePage() {
     }
   };
 
-  const handleLogout = () => {
-    setShowLogoutModal(false);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-    navigate("/login");
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+    // Cuộn mượt lên trên sau khi đổi trang
+    window.scrollTo({ top: 300, behavior: 'smooth' });
   };
 
   // ---- TÍNH TOÁN BỘ LỌC (REAL-TIME) ---- //
@@ -151,89 +156,8 @@ export function HomePage() {
     currentPage * POSTS_PER_PAGE
   );
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return;
-    setCurrentPage(newPage);
-    // Cuộn mượt lên trên sau khi đổi trang
-    window.scrollTo({ top: 300, behavior: 'smooth' });
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-300">
-      {/* Navbar */}
-      <nav className="bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-50 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
-                style={{ background: "linear-gradient(135deg, #a3e635, #16a34a)" }}
-              >
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <span
-                className="text-2xl tracking-tight dark:text-green-500"
-                style={{ color: "#15803d", fontFamily: "Georgia, serif", fontWeight: 700 }}
-              >
-                nhat<span className="italic">book</span>
-              </span>
-            </div>
-
-            {/* Auth Menu */}
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <div className="w-px h-6 bg-border mx-1" />
-              {user ? (
-                <div className="flex items-center gap-4">
-                  <div
-                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-2 py-1 rounded-lg transition-colors"
-                    onClick={() => navigate("/profile")}
-                  >
-                    <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center overflow-hidden bg-muted">
-                      {user.avatar_url ? (
-                        <img src={user.avatar_url} alt="Ava" className="w-full h-full object-cover" />
-                      ) : (
-                        <UserIcon className="w-4 h-4 text-green-700" />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-foreground/80">{user.username}</span>
-                    {user.role === "ADMIN" && (
-                      <span className="text-xs px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full font-semibold">
-                        Admin
-                      </span>
-                    )}
-                  </div>
-                  <div className="w-px h-6 bg-border" />
-                  <button
-                    onClick={() => setShowLogoutModal(true)}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-red-500 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Đăng xuất</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Link
-                    to="/login"
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Đăng nhập
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="text-sm font-medium px-4 py-2 rounded-xl text-white transition-all duration-200 hover:shadow-md"
-                    style={{ background: "linear-gradient(135deg, #a3e635, #16a34a)" }}
-                  >
-                    Đăng ký
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -251,7 +175,7 @@ export function HomePage() {
               </p>
             </div>
 
-            {user?.role === "ADMIN" && (
+            {(user?.role === "ADMIN" || user?.role === "MEMBER") && (
               <button
                 onClick={() => navigate("/admin/posts/new")}
                 className="shrink-0 px-8 py-4 bg-white text-green-700 text-base font-bold rounded-2xl hover:bg-gray-50 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-3"
@@ -313,45 +237,59 @@ export function HomePage() {
 
                         {/* Content */}
                         <div className="p-6 flex flex-col flex-1">
-                          <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-green-600 transition-colors line-clamp-2">
+                          {/* Author & Date at the TOP */}
+                          <div className="flex items-center justify-between mb-4 gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div 
+                                className="shrink-0 flex items-center justify-center p-0.5 rounded-full hover:ring-2 hover:ring-green-500 transition-all cursor-pointer" 
+                                onClick={(e) => { e.stopPropagation(); navigate(`/user/${post.author_id}`); }}
+                              >
+                                 <UserAvatar 
+                                    src={post.author_avatar} 
+                                    username={post.author_name} 
+                                    equippedItems={post.author_equipped_items}
+                                    size="sm"
+                                 />
+                              </div>
+                              <span 
+                                className="text-xs font-bold text-foreground/80 truncate hover:text-green-600 cursor-pointer transition-colors" 
+                                title={post.author_name}
+                                onClick={(e) => { e.stopPropagation(); navigate(`/user/${post.author_id}`); }}
+                              >
+                                {post.author_name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-bold uppercase tracking-tighter shrink-0">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(post.created_at).toLocaleDateString("vi-VN")}
+                            </div>
+                          </div>
+
+                          <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-green-600 transition-colors line-clamp-2 leading-tight">
                             {post.title}
                           </h3>
 
-                          {/* Tạm ẩn content dài chứa HTML, dùng previewText thuần túy */}
+                          {/* Preview Text */}
                           <p className="text-muted-foreground text-sm mb-6 line-clamp-3 flex-1 leading-relaxed">
                             {previewText}
                           </p>
 
-                          {/* Meta */}
+                          {/* Footer: Likes & Comments */}
                           <div className="flex items-center justify-between pt-4 border-t border-border">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full border border-border overflow-hidden flex items-center justify-center bg-muted">
-                                {post.author_avatar ? (
-                                  <img src={post.author_avatar} alt={post.author_name} className="w-full h-full object-cover" />
-                                ) : (
-                                  <span className="text-xs font-bold text-muted-foreground">
-                                    {post.author_name.charAt(0).toUpperCase()}
-                                  </span>
-                                )}
+                            <div className="flex items-center gap-4 text-muted-foreground text-xs font-semibold">
+                              <div className="flex items-center gap-1.5 hover:text-red-500 transition-colors cursor-pointer">
+                                <Heart className="w-4 h-4" />
+                                <span>{post.like_count || 0}</span>
                               </div>
-                              <span className="text-xs font-medium text-foreground/70">{post.author_name}</span>
-                            </div>
-
-                            <div className="flex items-center gap-3 text-muted-foreground text-xs font-medium">
-                              <div className="flex items-center gap-1.5 hover:text-red-500 transition-colors">
-                                <Heart className="w-3.5 h-3.5" />
-                                {post.like_count || 0}
-                              </div>
-                              <div className="flex items-center gap-1.5 hover:text-green-600 transition-colors">
-                                <MessageSquare className="w-3.5 h-3.5" />
-                                {post.comment_count || 0}
-                              </div>
-                              <div className="w-1 h-1 rounded-full bg-border"></div>
-                              <div className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5" />
-                                {new Date(post.created_at).toLocaleDateString("vi-VN")}
+                              <div className="flex items-center gap-1.5 hover:text-green-600 transition-colors cursor-pointer">
+                                <MessageSquare className="w-4 h-4" />
+                                <span>{post.comment_count || 0}</span>
                               </div>
                             </div>
+                            
+                            <span className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                              Đọc tiếp →
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -395,23 +333,26 @@ export function HomePage() {
           <aside className="w-full lg:w-[30%] xl:w-[25%] shrink-0">
             <div className="sticky top-24 space-y-6">
 
-              {/* Mini Author Profile */}
+              {/* Mini Author Profile - Updated to sync with user account */}
               <div className="bg-card rounded-3xl shadow-sm border border-border p-6 text-center">
-                <div className="w-24 h-24 mx-auto rounded-full bg-muted border-4 border-border overflow-hidden mb-4 shadow-sm flex items-center justify-center">
-                  {(user?.role === "ADMIN" ? user : adminUser)?.avatar_url ? (
-                    <img src={(user?.role === "ADMIN" ? user : adminUser).avatar_url} alt="Admin Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <UserIcon className="w-10 h-10 text-green-500" />
-                  )}
+                <div className="mx-auto mb-4 flex items-center justify-center">
+                   <UserAvatar 
+                      src={(user || adminUser)?.avatar_url} 
+                      username={(user || adminUser)?.username} 
+                      equippedItems={(user || adminUser)?.equipped_items}
+                      size="xl"
+                   />
                 </div>
-                <h3 className="text-lg font-bold text-foreground mb-1">{(user?.role === "ADMIN" ? user : adminUser)?.username || "Tác Giả"}</h3>
-                <p className="text-sm text-muted-foreground mb-4 px-2 tracking-tight">Đam mê công nghệ, yêu thích trải nghiệm và luôn chia sẻ góc nhìn cuộc sống.</p>
+                <h3 className="text-lg font-bold text-foreground mb-1">{(user || adminUser)?.username || "Tác Giả"}</h3>
+                <p className="text-sm text-muted-foreground mb-4 px-2 tracking-tight">
+                  {(user || adminUser)?.bio || "No bio yet"}
+                </p>
 
                 {/* Social Media Row Links */}
                 <div className="flex justify-center gap-3 mb-4">
                   {/* Facebook */}
-                  {(user?.role === "ADMIN" ? user : adminUser)?.facebook_url ? (
-                    <a href={safeLink((user?.role === "ADMIN" ? user : adminUser).facebook_url)} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
+                  {(user || adminUser)?.facebook_url ? (
+                    <a href={safeLink((user || adminUser).facebook_url)} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
                       <Facebook className="w-4 h-4" />
                     </a>
                   ) : (
@@ -421,8 +362,8 @@ export function HomePage() {
                   )}
 
                   {/* Instagram */}
-                  {(user?.role === "ADMIN" ? user : adminUser)?.instagram_url ? (
-                    <a href={safeLink((user?.role === "ADMIN" ? user : adminUser).instagram_url)} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all">
+                  {(user || adminUser)?.instagram_url ? (
+                    <a href={safeLink((user || adminUser).instagram_url)} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all">
                       <Instagram className="w-4 h-4" />
                     </a>
                   ) : (
@@ -432,8 +373,8 @@ export function HomePage() {
                   )}
 
                   {/* Threads */}
-                  {(user?.role === "ADMIN" ? user : adminUser)?.threads_url ? (
-                    <a href={safeLink((user?.role === "ADMIN" ? user : adminUser).threads_url)} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-muted text-foreground flex items-center justify-center hover:bg-foreground hover:text-background transition-all">
+                  {(user || adminUser)?.threads_url ? (
+                    <a href={safeLink((user || adminUser).threads_url)} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-muted text-foreground flex items-center justify-center hover:bg-foreground hover:text-background transition-all">
                       <ThreadsIcon className="w-4 h-4" />
                     </a>
                   ) : (
@@ -444,14 +385,19 @@ export function HomePage() {
                 </div>
 
                 <div className="h-px bg-border w-full mb-4"></div>
-                <div className="flex justify-center gap-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <div>
-                    <span className="block text-xl text-green-600 mb-1 font-bold">{posts.length}</span>
+                <div className="flex justify-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl text-green-600 mb-1 font-black">
+                      {user ? (user.post_count !== undefined ? (user.post_count > 9 ? "9+" : user.post_count) : 0) : posts.length}
+                    </span>
                     Bài viết
                   </div>
-                  <div>
-                    <span className="block text-xl text-rose-500 mb-1 font-bold">
-                      {posts.reduce((total, p) => total + Number(p.like_count || 0), 0)}
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl text-rose-500 mb-1 font-black">
+                      {user ? 
+                        (user.total_likes !== undefined ? (user.total_likes > 9 ? "9+" : user.total_likes) : 0) : 
+                        posts.reduce((total, p) => total + Number(p.like_count || 0), 0)
+                      }
                     </span>
                     Lượt thích
                   </div>
@@ -503,37 +449,6 @@ export function HomePage() {
 
         </div> {/* Kết thúc Grid 2 Cột Lớn */}
       </main>
-
-      {/* Logout Confirmation Modal */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity">
-          <div className="bg-card rounded-[2.5rem] p-8 max-w-sm w-full mx-4 shadow-2xl transform transition-all border border-border">
-            <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center mx-auto mb-6">
-              <LogOut className="w-8 h-8" />
-            </div>
-
-            <h3 className="text-xl font-bold text-foreground text-center mb-2">Đăng xuất tài khoản?</h3>
-            <p className="text-muted-foreground text-center text-sm mb-8">
-              Bạn có chắc chắn muốn đăng xuất khỏi hệ thống ngay lúc này không?
-            </p>
-
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={handleLogout}
-                className="w-full py-3.5 px-4 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 active:scale-[0.98]"
-              >
-                Vâng, hãy đăng xuất
-              </button>
-              <button
-                onClick={() => setShowLogoutModal(false)}
-                className="w-full py-3.5 px-4 bg-muted text-muted-foreground font-bold rounded-xl hover:bg-muted/80 transition-all border border-border active:scale-[0.98]"
-              >
-                Không, tôi bấm nhầm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

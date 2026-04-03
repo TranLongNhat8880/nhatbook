@@ -22,6 +22,7 @@ export default defineConfig({
 
   // Proxy API calls to backend
   server: {
+    allowedHosts: true, // Cho phép tất cả các Host (Cloudflare, ngrok...) truy cập
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

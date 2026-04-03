@@ -2,8 +2,9 @@ import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { ArrowLeft, Send, BookOpen } from "lucide-react";
+import { ArrowLeft, Send, Save, Image as ImageIcon } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { API_ENDPOINTS } from "../api.config";
 
 export function EditPostPage() {
   const { id } = useParams();
@@ -15,6 +16,7 @@ export function EditPostPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [message, setMessage] = useState("");
 
   const quillRef = useRef<ReactQuill>(null);
@@ -23,10 +25,19 @@ export function EditPostPage() {
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
-        const res = await fetch(`/api/posts/${id}`);
+        const res = await fetch(API_ENDPOINTS.GET_POST_DETAIL(id!));
         const data = await res.json();
 
         if (res.ok && data.post) {
+          const userStr = localStorage.getItem("user");
+          const currentUser = userStr ? JSON.parse(userStr) : null;
+          
+          if (!currentUser || (currentUser.role !== "ADMIN" && currentUser.id !== data.post.author_id)) {
+            alert("Bạn không có quyền chỉnh sửa bài viết này.");
+            navigate(`/posts/${id}`);
+            return;
+          }
+
           setTitle(data.post.title);
           setCategory(data.post.category || "");
           setContent(data.post.content);
@@ -61,8 +72,10 @@ export function EditPostPage() {
       const formData = new FormData();
       formData.append("image", file);
 
+      setIsUploadingImage(true);
+
       try {
-        const res = await fetch("/api/upload", {
+        const res = await fetch(API_ENDPOINTS.UPLOAD_IMAGE, {
           method: "POST",
           headers: { "Authorization": `Bearer ${token}` },
           body: formData,
@@ -83,6 +96,8 @@ export function EditPostPage() {
       } catch (err) {
         console.error("Lỗi upload handler:", err);
         alert("Có lỗi xảy ra khi tải ảnh lên.");
+      } finally {
+        setIsUploadingImage(false);
       }
     };
   }, []);
@@ -117,7 +132,7 @@ export function EditPostPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/posts/${id}`, {
+      const res = await fetch(API_ENDPOINTS.UPDATE_POST(id!), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -150,38 +165,31 @@ export function EditPostPage() {
 
   return (
     <div className="min-h-screen bg-background font-sans transition-colors duration-300 text-foreground">
-      {/* Navbar Minimalist */}
-      <nav className="bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #a3e635, #16a34a)" }}>
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <span
-              className="text-xl tracking-tight dark:text-green-500"
-              style={{ color: "#15803d", fontFamily: "Georgia, serif", fontWeight: 700 }}
-            >
-              nhat<span className="italic">book</span>
-            </span>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
+        {/* Header Back & Action */}
+        <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <Link to={`/posts/${id}`} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" /> Hủy và quay lại
+            <Link to={`/posts/${id}`} className="p-3 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="w-5 h-5" />
             </Link>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-black text-foreground mb-0">Chỉnh sửa bài viết</h1>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none">Hoàn thiện tác phẩm của bạn</p>
+            </div>
           </div>
-        </div>
-      </nav>
-
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-foreground mb-2">Chỉnh sửa bài viết</h1>
-          <p className="text-muted-foreground">Cập nhật nội dung bài viết của bạn để hoàn thiện hơn.</p>
+          <ThemeToggle />
         </div>
 
         {message && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-xl font-medium border border-red-100 dark:border-red-900/30 flex items-center gap-2">
-            ⚠️ {message}
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-sm rounded-xl font-bold border border-red-100 dark:border-red-900/30">
+            {message}
+          </div>
+        )}
+
+        {isUploadingImage && (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 text-sm rounded-xl font-bold border border-green-100 dark:border-green-900/30 flex items-center gap-3 animate-pulse">
+            <span className="w-5 h-5 border-2 border-green-700 dark:border-green-400 border-t-transparent rounded-full animate-spin"></span>
+            Đang làm đẹp hình ảnh...
           </div>
         )}
 
@@ -212,7 +220,10 @@ export function EditPostPage() {
 
             {/* Editor Section */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-foreground/70 uppercase tracking-wider ml-1">Nội dung bài viết</label>
+              <div className="flex justify-between items-baseline mb-1">
+                <label className="block text-sm font-bold text-foreground/70 uppercase tracking-wider ml-1">Nội dung bài viết</label>
+                <span className="text-xs text-muted-foreground/80 italic">Mẹo: Chạm/Click vào ảnh và nhấn nút Xóa trên bàn phím để gỡ ảnh</span>
+              </div>
               <div className="rounded-2xl border border-border overflow-hidden bg-background prose-img:rounded-2xl">
                 <ReactQuill
                   ref={quillRef}

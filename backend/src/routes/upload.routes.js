@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const upload = require("../middleware/upload");
-const { verifyToken, requireAdmin } = require("../middleware/auth");
+const { verifyToken, requireAdmin, requireWriter } = require("../middleware/auth");
 
 // POST /api/upload
-// Cho phép Admin upload ảnh để dán vào bài viết (thông qua React-Quill)
-router.post("/", verifyToken, requireAdmin, upload.single("image"), (req, res) => {
+// Cho phép Admin/Tác giả upload ảnh để dán vào bài viết (thông qua React-Quill)
+router.post("/", verifyToken, requireWriter, upload.single("image"), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "Không tìm thấy file ảnh" });

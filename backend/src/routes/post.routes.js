@@ -10,7 +10,7 @@ const {
   getPostLikes,
 } = require("../controllers/post.controller");
 const { getComments, addComment } = require("../controllers/comment.controller");
-const { verifyToken, requireAdmin } = require("../middleware/auth");
+const { verifyToken, requireAdmin, requireWriter } = require("../middleware/auth");
 
 // GET /api/posts — UC_04 (Public)
 router.get("/", getAllPosts);
@@ -18,14 +18,14 @@ router.get("/", getAllPosts);
 // GET /api/posts/:id — UC_05 (Public)
 router.get("/:id", getPostById);
 
-// POST /api/posts — UC_06 (Admin only)
-router.post("/", verifyToken, requireAdmin, createPost);
+// POST /api/posts — UC_06 (Writer or Admin)
+router.post("/", verifyToken, requireWriter, createPost);
 
-// PUT /api/posts/:id — UC_07 (Admin only)
-router.put("/:id", verifyToken, requireAdmin, updatePost);
+// PUT /api/posts — UC_07 (Writer or Admin)
+router.put("/:id", verifyToken, requireWriter, updatePost);
 
-// DELETE /api/posts/:id — UC_07 (Admin only)
-router.delete("/:id", verifyToken, requireAdmin, deletePost);
+// DELETE /api/posts — UC_07 (Writer or Admin)
+router.delete("/:id", verifyToken, requireWriter, deletePost);
 
 // POST /api/posts/:id/like — (Any verified User)
 router.post("/:id/like", verifyToken, toggleLike);
