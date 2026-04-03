@@ -15,8 +15,8 @@ const checkContentToxicity = async (content) => {
       return { isToxic: false, reason: "" };
     }
 
-    // Thử dùng model 'models/gemini-2.5-flash' mới nhất để check quota
-    const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
+    // Sử dụng model gemini-1.5-flash chính thức
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
       Bạn là một chuyên gia kiểm duyệt nội dung cho mạng xã hội NhatBook. 
@@ -37,9 +37,9 @@ const checkContentToxicity = async (content) => {
       }
     `;
 
-    // Thêm timeout 20 giây để tránh treo request nếu Gemini phản hồi chậm (Phòng hờ mạng lag)
+    // Thêm timeout 15 giây
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Gemini timeout")), 20000)
+      setTimeout(() => reject(new Error("Gemini timeout")), 15000)
     );
 
     const result = await Promise.race([
@@ -50,24 +50,21 @@ const checkContentToxicity = async (content) => {
     const response = await result.response;
     const text = response.text();
 
-    // Loại bỏ markdown code blocks nếu AI trả về (ví dụ: ```json ... ```)
     const jsonString = text.replace(/```json|```/gi, "").trim();
 
     try {
       const parsedContent = JSON.parse(jsonString);
       return {
-        isToxic: !!parsedContent.isToxic,
+        isToxic: !!parsedContent.isToxic, 
         reason: parsedContent.reason || ""
       };
     } catch (parseError) {
-      console.error("Lỗi parse JSON từ Gemini. Raw text:", text);
-      // Fallback nếu AI không trả đúng định dạng JSON
       return { isToxic: false, reason: "" };
     }
   } catch (error) {
     console.error("Lỗi AI Moderator:", error);
-    // Nếu có lỗi API, cho phép nội dung đi qua để tránh treo hệ thống
-    return { isToxic: false, reason: "Lỗi kết nối AI" };
+    // Luôn cho qua nếu có lỗi AI
+    return { isToxic: false, reason: "" };
   }
 };
 
