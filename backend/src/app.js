@@ -21,14 +21,7 @@ const app = express();
 // ── Middleware ─────────────────────────────────────────
 // 1. CORS - Phải đặt trên cùng để tránh lỗi Preflight
 app.use(cors({
-  origin: (origin, callback) => {
-    // Cho phép localhost và các domain của Cloudflare TryCloudflare
-    if (!origin || origin.startsWith("http://localhost") || origin.endsWith(".trycloudflare.com")) {
-      callback(null, true);
-    } else {
-      callback(new Error("Không được phép bởi CORS"));
-    }
-  },
+  origin: process.env.FRONTEND_URL || "*",
   credentials: true
 }));
 
@@ -52,7 +45,7 @@ app.use(express.json());
 const distPath = path.join(__dirname, "../../frontend/dist");
 // ── Routes ─────────────────────────────────────────────
 app.get("/", (req, res) => {
-  res.json({ message: "nhatbook API đang chạy (Localhost)!" });
+  res.json({ message: "nhatbook API đang chạy!" });
 });
 
 app.use("/api/auth", authRoutes);

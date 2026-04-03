@@ -34,7 +34,8 @@ export function NotificationBell({ token, userId }: { token: string, userId: str
     fetchNotifications();
 
     // Khởi tạo kênh Real-time bằng Socket.io (Port 3000 đang dùng cho backend local)
-    const socket = io('http://localhost:3000');
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const socket = io(backendUrl);
 
     socket.on('connect', () => {
       socket.emit('register', userId);
