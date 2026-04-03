@@ -116,7 +116,7 @@ export function ShopPage() {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem("token");
-      const walletRes = await fetch("/api/users/wallet", {
+      const walletRes = await fetch(API_ENDPOINTS.GET_WALLET, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const walletData = await walletRes.json();
@@ -124,7 +124,7 @@ export function ShopPage() {
         setBalance(walletData.balance);
       }
       
-      const invRes = await fetch("/api/shop/inventory", {
+      const invRes = await fetch(API_ENDPOINTS.GET_INVENTORY, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const invData = await invRes.json();
@@ -148,7 +148,7 @@ export function ShopPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/shop/buy", {
+      const res = await fetch(API_ENDPOINTS.BUY_ITEM, {
         method: "POST",
         headers: { 
           "Authorization": `Bearer ${token}`,
@@ -183,7 +183,7 @@ export function ShopPage() {
   const handleEquip = async (itemId: string) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/shop/equip", {
+      const res = await fetch(API_ENDPOINTS.EQUIP_ITEM, {
         method: "PUT",
         headers: { 
           "Authorization": `Bearer ${token}`,

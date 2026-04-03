@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BookOpen, Trophy, Flame, Star, Medal, TrendingUp, Crown, Award, Coins } from "lucide-react";
 import { UserAvatar } from "./ui/UserAvatar";
+import { API_ENDPOINTS } from "../api.config";
 
 type Period = "week" | "month" | "all";
 
@@ -70,7 +71,7 @@ export function LeaderboardPage() {
 
   const fetchLeaderboard = async () => {
     try {
-      const res = await fetch("/api/users/leaderboard");
+      const res = await fetch(API_ENDPOINTS.GET_LEADERBOARD);
       const data = await res.json();
       if (res.ok) {
         setLeaderboard(data.leaderboard);

@@ -41,7 +41,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       }
 
       // 2. Fetch Wallet Status (Checkin)
-      const walletRes = await fetch("/api/users/wallet", {
+      const walletRes = await fetch(API_ENDPOINTS.GET_WALLET, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (walletRes.ok) {

@@ -57,4 +57,12 @@ export const API_ENDPOINTS = {
   GET_FRIENDS: `${API_BASE_URL}/friends`,
   GET_PENDING_REQUESTS: `${API_BASE_URL}/friends/pending`,
   GET_FRIEND_STATUS: (id: string) => `${API_BASE_URL}/friends/status/${id}`,
+
+  // Shop & Wallet
+  GET_WALLET: `${API_BASE_URL}/users/wallet`,
+  CHECKIN: `${API_BASE_URL}/users/checkin`,
+  GET_INVENTORY: `${API_BASE_URL}/shop/inventory`,
+  BUY_ITEM: `${API_BASE_URL}/shop/buy`,
+  EQUIP_ITEM: `${API_BASE_URL}/shop/equip`,
+  GET_LEADERBOARD: `${API_BASE_URL}/users/leaderboard`,
 };

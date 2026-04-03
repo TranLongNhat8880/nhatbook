@@ -23,6 +23,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router";
+import { API_ENDPOINTS } from "../api.config";
 import { useTheme } from "next-themes";
 import { UserAvatar } from "./ui/UserAvatar";
 
@@ -63,7 +64,7 @@ export function NavigationDrawer({ isOpen, onClose, user, canCheckin: propCanChe
   const fetchWallet = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/users/wallet", {
+      const res = await fetch(API_ENDPOINTS.GET_WALLET, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await res.json();
@@ -80,7 +81,7 @@ export function NavigationDrawer({ isOpen, onClose, user, canCheckin: propCanChe
   const handleCheckin = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/users/checkin", {
+      const res = await fetch(API_ENDPOINTS.CHECKIN, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
       });
