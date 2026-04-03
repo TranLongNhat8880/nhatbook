@@ -438,18 +438,18 @@ export function PostDetailPage() {
             {parentComments.map((parent) => (
               <div key={parent.id} className="flex flex-col gap-4">
                 <div className="flex gap-4 group">
-                  <div className="shrink-0 flex items-center justify-center p-0.5 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${parent.user_id}`)}>
+                  <div className="shrink-0 flex items-center justify-center p-0.5 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${parent.user_id || (parent as any).author_id}`)}>
                     <UserAvatar 
                       src={parent.author_avatar} 
                       username={parent.author_name} 
-                      equippedItems={parent.author_equipped_items}
+                      equippedItems={parent.author_equipped_items || []}
                       size="md"
                     />
                   </div>
 
                   <div className="flex-1">
                     {(() => {
-                      const hasGold = parent.author_equipped_items?.some(i => i.item_id === 'gold_comment');
+                      const hasGold = (parent.author_equipped_items || [])?.some(i => i?.item_id === 'gold_comment');
                       return (
                         <div className={`rounded-2xl rounded-tl-sm px-5 py-4 border transition-all ${
                           hasGold 
@@ -572,17 +572,17 @@ export function PostDetailPage() {
                     <div className="absolute -left-10 top-2 bottom-4 w-px bg-border rounded-full" />
                     {getReplies(parent.id).map(child => (
                       <div key={child.id} className="flex gap-3 group">
-                        <div className="shrink-0 flex items-center justify-center p-0.5 scale-90 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${child.user_id}`)}>
+                        <div className="shrink-0 flex items-center justify-center p-0.5 scale-90 cursor-pointer hover:ring-2 ring-green-500 rounded-full transition-all" onClick={() => navigate(`/user/${child.user_id || (child as any).author_id}`)}>
                            <UserAvatar 
                               src={child.author_avatar} 
                               username={child.author_name} 
-                              equippedItems={child.author_equipped_items}
+                              equippedItems={child.author_equipped_items || []}
                               size="sm"
                            />
                         </div>
                         <div className="flex-1">
                           {(() => {
-                            const hasGold = child.author_equipped_items?.some(i => i.item_id === 'gold_comment');
+                            const hasGold = (child.author_equipped_items || [])?.some(i => i?.item_id === 'gold_comment');
                             return (
                               <div className={`rounded-2xl rounded-tl-sm px-4 py-3 border transition-all ${
                                 hasGold 

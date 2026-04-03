@@ -14,9 +14,12 @@ const getComments = async (req, res) => {
       `SELECT c.id, c.content, c.is_flagged, c.violation_reason, c.created_at, 
               c.parent_id, c.parent_id AS "parentId",
               u.id AS user_id, u.id AS author_id, u.username AS author_name, u.avatar_url AS author_avatar, u.role AS author_role,
-              (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
-               FROM user_inventory 
-               WHERE user_id = u.id AND is_equipped = true) AS author_equipped_items
+              COALESCE(
+                (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
+                 FROM user_inventory 
+                 WHERE user_id = u.id AND is_equipped = true),
+                '[]'::json
+              ) AS author_equipped_items
        FROM comments c
        JOIN users u ON u.id = c.user_id
        WHERE c.post_id = $1

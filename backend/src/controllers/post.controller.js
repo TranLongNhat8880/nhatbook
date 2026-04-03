@@ -11,9 +11,12 @@ const getAllPosts = async (req, res) => {
     const result = await pool.query(
       `SELECT p.id, p.title, p.content, p.category, p.created_at, p.updated_at,
               u.id AS author_id, u.username AS author_name, u.avatar_url AS author_avatar,
-              (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
-               FROM user_inventory 
-               WHERE user_id = u.id AND is_equipped = true) AS author_equipped_items,
+              COALESCE(
+                (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
+                 FROM user_inventory 
+                 WHERE user_id = u.id AND is_equipped = true),
+                '[]'::json
+              ) AS author_equipped_items,
               COUNT(DISTINCT c.id) AS comment_count,
               COUNT(DISTINCT l.user_id) AS like_count
        FROM posts p
@@ -40,9 +43,12 @@ const getPostById = async (req, res) => {
     const result = await pool.query(
       `SELECT p.id, p.title, p.content, p.category, p.created_at, p.updated_at,
               u.id AS author_id, u.username AS author_name, u.avatar_url AS author_avatar,
-              (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
-               FROM user_inventory 
-               WHERE user_id = u.id AND is_equipped = true) AS author_equipped_items
+              COALESCE(
+                (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
+                 FROM user_inventory 
+                 WHERE user_id = u.id AND is_equipped = true),
+                '[]'::json
+              ) AS author_equipped_items
        FROM posts p
        JOIN users u ON u.id = p.author_id
        WHERE p.id = $1`,
