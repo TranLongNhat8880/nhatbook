@@ -11,17 +11,19 @@ const getComments = async (req, res) => {
   const { id } = req.params; // post id
   try {
     const result = await pool.query(
-      `SELECT c.id, c.content, c.is_flagged, c.violation_reason, c.created_at, 
-              c.parent_id, c.parent_id AS "parentId",
-              u.id AS user_id, u.id AS author_id, u.username AS author_name, u.avatar_url AS author_avatar, u.role AS author_role,
-              COALESCE(
-                (SELECT json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) 
-                 FROM user_inventory 
-                 WHERE user_id = u.id AND is_equipped = true),
-                '[]'::json
-              ) AS author_equipped_items
+      `SELECT c.id, c.content, c.post_id, c.user_id, c.parent_id, c.is_flagged, c.created_at,
+              u.username AS author_name, u.avatar_url AS author_avatar, u.role AS author_role,
+              u.id AS author_id,
+              c.parent_id AS "parentId",
+              COALESCE(ui.author_equipped_items, '[]'::json) AS author_equipped_items
        FROM comments c
        JOIN users u ON u.id = c.user_id
+       LEFT JOIN (
+         SELECT user_id, json_agg(json_build_object('item_id', item_id, 'item_type', item_type)) AS author_equipped_items
+         FROM user_inventory 
+         WHERE is_equipped = true
+         GROUP BY user_id
+       ) ui ON ui.user_id = u.id
        WHERE c.post_id = $1
        ORDER BY c.created_at ASC`,
       [id]
@@ -72,7 +74,7 @@ const addComment = async (req, res) => {
     const result = await pool.query(
       `INSERT INTO comments (content, post_id, user_id, parent_id, is_flagged, violation_reason)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, content, post_id, user_id, parent_id, is_flagged, violation_reason, created_at`,
+       RETURNING id, content, post_id, user_id, user_id AS author_id, parent_id, parent_id AS "parentId", is_flagged, violation_reason, created_at`,
       [sanitizedContent.trim(), id, req.user.id, parent_id || null, isToxic, reason]
     );
 

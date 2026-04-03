@@ -236,8 +236,19 @@ export function PostDetailPage() {
     }
   };
 
-  const parentComments = comments.filter(c => !(c as any).parent_id && !(c as any).parentId);
-  const getReplies = (parentId: string) => comments.filter(c => (c as any).parent_id === parentId || (c as any).parentId === parentId);
+  const parentComments = comments.filter(c => {
+    const pId = (c as any).parent_id || (c as any).parentId;
+    return !pId || String(pId).trim() === "" || String(pId).trim() === "null";
+  });
+
+  const getReplies = (parentId: string) => {
+    if (!parentId) return [];
+    const targetId = String(parentId).toLowerCase().trim();
+    return comments.filter(c => {
+      const cPId = (c as any).parent_id || (c as any).parentId;
+      return cPId && String(cPId).toLowerCase().trim() === targetId;
+    });
+  };
 
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground font-medium animate-pulse">Đang tải bài viết...</div>;
   if (!post) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground font-medium">Rất tiếc, bài viết không tồn tại.</div>;
