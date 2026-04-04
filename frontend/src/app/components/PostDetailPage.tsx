@@ -60,7 +60,24 @@ export function PostDetailPage() {
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
-        setCurrentUser(JSON.parse(userStr));
+        const parsed = JSON.parse(userStr);
+        setCurrentUser(parsed);
+        // Sync lại với server để đảm bảo role và data luôn mới nhất
+        // (Fix bug: Render cold start chậm khiến MainLayout chưa kịp sync trước PostDetailPage)
+        const token = localStorage.getItem("token");
+        if (token) {
+          fetch(API_ENDPOINTS.GET_ME, {
+            headers: { "Authorization": `Bearer ${token}` }
+          })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+              if (data?.user) {
+                setCurrentUser(data.user);
+                localStorage.setItem("user", JSON.stringify(data.user));
+              }
+            })
+            .catch(() => {}); // Lỗi mạng không crash app
+        }
       } catch (e) { }
     }
 
@@ -237,16 +254,20 @@ export function PostDetailPage() {
   };
 
   const parentComments = comments.filter(c => {
-    const pId = (c as any).parent_id || (c as any).parentId;
-    return !pId || String(pId).trim() === "" || String(pId).trim() === "null";
+    // Dùng ?? thay || để tránh falsy coercion với UUID dạng string
+    const pId = c.parent_id ?? (c as any).parentId;
+    return pId === null || pId === undefined || String(pId).trim() === "" || String(pId).trim() === "null";
   });
 
   const getReplies = (parentId: string) => {
     if (!parentId) return [];
-    const targetId = String(parentId).toLowerCase().trim();
+    // Không dùng toLowerCase() — UUID từ Supabase production đã là lowercase text
+    // Dùng trim() để loại bỏ whitespace ẩn có thể có khi qua PgBouncer
+    const targetId = String(parentId).trim();
     return comments.filter(c => {
-      const cPId = (c as any).parent_id || (c as any).parentId;
-      return cPId && String(cPId).toLowerCase().trim() === targetId;
+      const cPId = c.parent_id ?? (c as any).parentId;
+      if (!cPId) return false;
+      return String(cPId).trim() === targetId;
     });
   };
 

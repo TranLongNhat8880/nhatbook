@@ -11,10 +11,12 @@ const getComments = async (req, res) => {
   const { id } = req.params; // post id
   try {
     const result = await pool.query(
-      `SELECT c.id, c.content, c.post_id, c.user_id, c.parent_id, c.is_flagged, c.created_at,
+      `SELECT c.id, c.content, c.post_id,
+              c.user_id::text AS user_id,
+              c.parent_id::text AS parent_id,
+              c.is_flagged, c.created_at,
               u.username AS author_name, u.avatar_url AS author_avatar, u.role AS author_role,
-              u.id AS author_id,
-              c.parent_id AS "parentId",
+              u.id::text AS author_id,
               COALESCE(ui.author_equipped_items, '[]'::json) AS author_equipped_items
        FROM comments c
        JOIN users u ON u.id = c.user_id
